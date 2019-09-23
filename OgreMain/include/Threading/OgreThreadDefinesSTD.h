@@ -131,6 +131,7 @@ namespace Ogre
 #define OGRE_THREAD_WORKER_INHERIT
 
 // Utility
+#define OGRE_MUTEX_TYPE std::recursive_mutex
 #define OGRE_THREAD_ID_TYPE std::thread::id
 #define OGRE_THREAD_YIELD std::this_thread::yield()
 
