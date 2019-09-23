@@ -370,6 +370,9 @@ namespace Ogre
         virtual ~DefaultWorkQueueBase();
         /// Get the name of the work queue
         const String& getName() const;
+
+        RequestID reserveID();
+
         /** Get the number of worker threads that this queue will start when 
             startup() is called. 
         */
