@@ -99,7 +99,7 @@ namespace Ogre
 #define OGRE_STATIC_MUTEX_INSTANCE(name) std::recursive_mutex name
 // like OGRE_AUTO_MUTEX but mutex held by pointer
 #define OGRE_AUTO_SHARED_MUTEX mutable std::recursive_mutex *OGRE_AUTO_MUTEX_NAME
-#define OGRE_LOCK_AUTO_SHARED_MUTEX assert(OGRE_AUTO_MUTEX_NAME); std::recursive_mutex::scoped_lock ogreAutoMutexLock(*OGRE_AUTO_MUTEX_NAME)
+#define OGRE_LOCK_AUTO_SHARED_MUTEX assert(OGRE_AUTO_MUTEX_NAME); std::scoped_lock ogreAutoMutexLock(*OGRE_AUTO_MUTEX_NAME)
 #define OGRE_NEW_AUTO_SHARED_MUTEX assert(!OGRE_AUTO_MUTEX_NAME); OGRE_AUTO_MUTEX_NAME = new std::recursive_mutex()
 #define OGRE_DELETE_AUTO_SHARED_MUTEX do { assert(OGRE_AUTO_MUTEX_NAME); delete OGRE_AUTO_MUTEX_NAME; } while (0)
 #define OGRE_COPY_AUTO_SHARED_MUTEX(from) assert(!OGRE_AUTO_MUTEX_NAME); OGRE_AUTO_MUTEX_NAME = from
@@ -131,6 +131,7 @@ namespace Ogre
 #define OGRE_THREAD_WORKER_INHERIT
 
 // Utility
+#define OGRE_MUTEX_TYPE std::recursive_mutex
 #define OGRE_THREAD_ID_TYPE std::thread::id
 #define OGRE_THREAD_YIELD std::this_thread::yield()
 

@@ -91,9 +91,6 @@ namespace Ogre
     class D3D11RenderSystem;
     class D3D11RenderWindowBase;
     class D3D11CompatBufferInterface;
-    class D3D11Texture;
-    class D3D11TextureManager;
-    class D3D11DepthBuffer;
     class D3D11Driver;
     class D3D11DriverList;
     class D3D11DynamicBuffer;
@@ -111,6 +108,14 @@ namespace Ogre
     struct D3D11VertexArrayObjectShared;
     class D3D11Window;
 
+#ifdef OGRE_DEPRECATED_2_2
+    class D3D11Texture;
+    class D3D11TextureManager;
+    class D3D11DepthBuffer;
+
+    typedef SharedPtr<D3D11Texture>     D3D11TexturePtr;
+#endif
+
     namespace v1
     {
         class D3D11HardwareBuffer;
@@ -120,7 +125,6 @@ namespace Ogre
     }
 
     typedef SharedPtr<D3D11HLSLProgram> D3D11HLSLProgramPtr;
-    typedef SharedPtr<D3D11Texture>     D3D11TexturePtr;
 
     //-------------------------------------------
     // Windows setttings

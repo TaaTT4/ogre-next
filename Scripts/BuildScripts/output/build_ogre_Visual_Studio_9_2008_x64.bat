@@ -2,7 +2,7 @@
 @echo off
 SETLOCAL
 
-set OGRE_BRANCH_NAME=v2-2
+set OGRE_BRANCH_NAME=master
 set GENERATOR="Visual Studio 9 2008"
 set PLATFORM=x64
 
@@ -43,12 +43,11 @@ echo --- Building Ogredeps ---
 %CMAKE_BIN% --build . --target install --config Release
 
 cd ../../
-IF NOT EXIST ogre (
-	mkdir ogre
-	echo --- Cloning Ogre v2-2 ---
-	hg clone https://bitbucket.org/sinbad/ogre -r %OGRE_BRANCH_NAME% ogre
+IF NOT EXIST ogre-next (
+	echo --- Cloning Ogre master ---
+	git clone --branch %OGRE_BRANCH_NAME% https://github.com/OGRECave/ogre-next
 )
-cd ogre
+cd ogre-next
 IF NOT EXIST Dependencies (
 	mklink /D Dependencies ..\ogredeps\build\ogredeps
 )

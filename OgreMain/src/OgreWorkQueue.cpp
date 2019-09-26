@@ -90,6 +90,11 @@ namespace Ogre {
         return mName;
     }
     //---------------------------------------------------------------------
+    WorkQueue::RequestID DefaultWorkQueueBase::reserveID()
+    {
+        return ++mRequestCount;
+    }
+    //---------------------------------------------------------------------
     size_t DefaultWorkQueueBase::getWorkerThreadCount() const
     {
         return mWorkerThreadCount;
