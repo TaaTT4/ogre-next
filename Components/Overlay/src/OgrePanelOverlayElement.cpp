@@ -296,8 +296,7 @@ namespace v1 {
         if (!mMaterialName.empty() && mInitialised)
         {
             HlmsManager *hlmsManager = Root::getSingleton().getHlmsManager();
-            Hlms *hlms = hlmsManager->getHlms( HLMS_UNLIT );
-            HlmsDatablock *datablock = hlms->getDatablock( mMaterialName );
+            HlmsDatablock *datablock = hlmsManager->getDatablock( mMaterialName );
             assert( dynamic_cast<OverlayUnlitDatablock*>( datablock ) );
 
             OverlayUnlitDatablock *guiDatablock = static_cast<OverlayUnlitDatablock*>(datablock);
