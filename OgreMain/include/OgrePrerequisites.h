@@ -53,7 +53,7 @@ namespace Ogre {
     #define OGRE_VERSION_MINOR 2
     #define OGRE_VERSION_PATCH 0
     #define OGRE_VERSION_SUFFIX "unstable"
-    #define OGRE_VERSION_NAME "C"
+    #define OGRE_VERSION_NAME "Cerberus"
 
     #define OGRE_VERSION    ((OGRE_VERSION_MAJOR << 16) | (OGRE_VERSION_MINOR << 8) | OGRE_VERSION_PATCH)
 
@@ -323,7 +323,6 @@ namespace Ogre {
     class TexBufferPacked;
     class ExternalTextureSource;
     class TextureUnitState;
-    class Texture;
     struct TextureBox;
     class TextureGpu;
     class TextureGpuListener;
@@ -359,10 +358,12 @@ namespace Ogre {
     class RenderToVertexBuffer;
     class RenderWindow;
     class MultiRenderTarget;
+    class Texture;
     class TextureManager;
 
     template<typename T> class SharedPtr;
     typedef SharedPtr<RenderToVertexBuffer> RenderToVertexBufferSharedPtr;
+    typedef SharedPtr<Texture> TexturePtr;
 #endif
 
     template<typename T> class SharedPtr;
@@ -381,7 +382,6 @@ namespace Ogre {
     typedef SharedPtr<Resource> ResourcePtr;
     typedef SharedPtr<ShadowCameraSetup> ShadowCameraSetupPtr;
     typedef SharedPtr<SkeletonDef> SkeletonDefPtr;
-    typedef SharedPtr<Texture> TexturePtr;
 
     namespace v1
     {

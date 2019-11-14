@@ -146,6 +146,7 @@ namespace Ogre {
         HlmsManager *mHlmsManager;
         SceneManager*mSceneManager;
         VaoManager  *mVaoManager;
+        Root        *mRoot;
 
         bool                    mLastWasCasterPass;
         uint32                  mLastVaoName;
@@ -158,6 +159,8 @@ namespace Ogre {
         IndirectBufferPackedVec mUsedIndirectBuffers;
 
         HlmsCache               mPassCache[HLMS_MAX];
+
+        uint32 mRenderingStarted;
 
         /** Returns a new (or an existing) indirect buffer that can hold the requested number of draws.
         @param numDraws
@@ -206,6 +209,11 @@ namespace Ogre {
                               const MovableObject *pMovableObject );
 
         /** Add a renderable (Ogre v2.0, i.e. Items; they use VAOs) object to the queue.
+        @remarks
+            If sorting mode is set to DisableSort (RenderQueue::setSortRenderQueue)
+            for the given renderQueueId, then the order in which renderables are
+            added via RenderQueue::addRenderableV2 (and V1) determines the
+            render order (the first added get rendered first) within that renderQueueId.
         @param threadIdx
             The unique index of the thread from which this function is called from.
             Valid range is [0; SceneManager::mNumWorkerThreads)
@@ -222,6 +230,29 @@ namespace Ogre {
         void addRenderableV2( size_t threadIdx, uint8 renderQueueId, bool casterPass,
                               Renderable* pRend, const MovableObject *pMovableObject );
 
+        /** If you need to call RenderQueue::render, then you must call this function.
+            This function MUST be called (all listed functions are called in this order):
+                1. After RenderSystem::beginRenderPassDescriptor
+                2. After SceneManager::fireRenderQueueStarted
+                3. Before RenderSystem::executeRenderPassDescriptorDelayedActions
+                4. Before RenderQueue::render
+
+            Note that fireRenderQueueStarted just fires arbitrary listeners. You don't have
+            to call that function if you are sure you don't need it.
+
+            To clarify functions are called in this order:
+            @code
+                mRenderSystem->beginRenderPassDescriptor();
+                mSceneManager->fireRenderQueueStarted();
+                mRenderQueue->renderPassPrepare();
+                mRenderSystem->executeRenderPassDescriptorDelayedActions();
+                mRenderQueue->render();
+            @endcode
+
+            Calling these functions in proper order is needed for best compatibility with Metal
+        @param casterPass
+        @param dualParaboloid
+        */
         void renderPassPrepare( bool casterPass, bool dualParaboloid );
 
         void render( RenderSystem *rs, uint8 firstRq, uint8 lastRq,

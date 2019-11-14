@@ -56,7 +56,6 @@ namespace Ogre
     typedef vector<TextureGpu*>::type TextureGpuVec;
     typedef map< uint16, TextureGpuVec >::type DepthBufferMap2;
 
-    class TextureManager;
     /// Enum describing the ways to generate texture coordinates
     enum TexCoordCalcMethod
     {
@@ -555,9 +554,6 @@ namespace Ogre
         */
         void setGlobalNumberOfInstances(const size_t val);
 
-        /** Returns true if fixed pipeline rendering is enabled on the system.
-        */
-        bool getFixedPipelineEnabled(void) const;
 
         // ------------------------------------------------------------------------
         //                     Internal Rendering Access
@@ -893,9 +889,7 @@ namespace Ogre
         /// This gives the renderer a chance to perform the compositor update in a special way.
         /// When the render system is ready to perform the actual update it should just
         /// compositorManager->_updateImplementation.
-        virtual void updateCompositorManager( CompositorManager2 *compositorManager,
-                                              SceneManagerEnumerator &sceneManagers,
-                                              HlmsManager *hlmsManager );
+        virtual void updateCompositorManager( CompositorManager2 *compositorManager );
 
         /// @See HlmsSamplerblock. This function MUST be called after _setTexture, not before.
         /// Otherwise not all APIs may see the change.
