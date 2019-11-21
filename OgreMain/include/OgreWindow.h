@@ -59,8 +59,8 @@ namespace Ogre
         uint32  mFrequencyNumerator;
         uint32  mFrequencyDenominator;
 
-        uint32  mRequestedWidth;
-        uint32  mRequestedHeight;
+        uint32  mRequestedWidth; // in view points
+        uint32  mRequestedHeight; // in view points
 
         bool    mFullscreenMode;
         bool    mRequestedFullscreenMode;
@@ -72,13 +72,13 @@ namespace Ogre
         bool    mVSync;
         uint32  mVSyncInterval;
 
-        int32 mLeft;
-        int32 mTop;
+        int32 mLeft; // in pixels
+        int32 mTop; // in pixels
 
-        void setFinalResolution( uint32 width, uint32 height );
+        void setFinalResolution( uint32 widthPx, uint32 heightPx );
 
     public:
-        Window( const String &title, uint32 width, uint32 height, bool fullscreenMode );
+        Window( const String &title, uint32 widthPt, uint32 heightPt, bool fullscreenMode );
         virtual ~Window();
 
         virtual void destroy(void) = 0;
@@ -86,14 +86,37 @@ namespace Ogre
         virtual void setTitle( const String &title );
         const String& getTitle(void) const;
 
-        virtual void reposition( int32 left, int32 top ) = 0;
+        /** Many windowing systems that support HiDPI displays use special points to specify
+            size of the windows and controls, so that windows and controls with hardcoded
+            sizes does not become too small on HiDPI displays. Such points have constant density
+            ~ 100 points per inch (probably 96 on Windows and 72 on Mac), that is independent
+            of pixel density of real display, and are used through the all windowing system.
+            
+            Sometimes, such view points are choosen bigger for output devices that are viewed
+            from larger distances, like 30" TV comparing to 30" monitor, therefore maintaining
+            constant points angular density rather than constant linear density.
+            
+            In any case, all such windowing system provides the way to convert such view points
+            to pixels, be it DisplayProperties::LogicalDpi on WinRT or backingScaleFactor on MacOSX.
+            We use pixels consistently through the Ogre, but window/view management functions
+            takes view points for convenience, as does the rest of windowing system. Such parameters
+            are named using xxxxPt pattern, and should not be mixed with pixels without being
+            converted using getViewPointToPixelScale() function.
+            
+            Sometimes such scale factor can change on-the-fly, for example if window is dragged
+            to monitor with different DPI. In such situation, window size in view points is usually
+            preserved by windowing system, and Ogre should adjust pixel size of RenderWindow.
+        */
+        virtual float getViewPointToPixelScale() const { return 1.0f; }
+
+        virtual void reposition( int32 leftPt, int32 topPt ) = 0;
 
         /// Requests a change in resolution. Change is not immediate.
-        /// Use getRequestedWidth & getRequestedHeight if you need to know
+        /// Use getRequestedWidthPt & getRequestedHeightPt if you need to know
         /// what you've requested, but beware you may not get that resolution,
-        /// and once we get word from the OS, getRequestedWidth/Height will
-        /// change again so that getWidth == getRequestedWidth.
-        virtual void requestResolution( uint32 width, uint32 height );
+        /// and once we get word from the OS, getRequested{Width/Height}Pt will
+        /// change again so that getWidth == getRequestedWidthPt * getViewPointToPixelScale.
+        virtual void requestResolution( uint32 widthPt, uint32 heightPt );
 
         /** Requests to toggle between fullscreen and windowed mode.
         @remarks
@@ -117,7 +140,7 @@ namespace Ogre
             New frequency (fullscreen only). Leave 0 if you don't care.
         */
         virtual void requestFullscreenSwitch( bool goFullscreen, bool borderless, uint32 monitorIdx,
-                                              uint32 width, uint32 height,
+                                              uint32 widthPt, uint32 heightPt,
                                               uint32 frequencyNumerator, uint32 frequencyDenominator );
 
         virtual void setVSync( bool vSync, uint32 vSyncInterval );
@@ -136,8 +159,8 @@ namespace Ogre
         uint32 getFrequencyNumerator(void) const;
         uint32 getFrequencyDenominator(void) const;
 
-        uint32 getRequestedWidth(void) const;
-        uint32 getRequestedHeight(void) const;
+        uint32 getRequestedWidthPt(void) const;
+        uint32 getRequestedHeightPt(void) const;
 
         /// Returns true if we are currently in fullscreen mode.
         bool isFullscreen(void) const;

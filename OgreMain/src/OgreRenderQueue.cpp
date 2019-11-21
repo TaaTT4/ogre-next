@@ -102,9 +102,13 @@ namespace Ogre
         for( size_t i=0; i<256; ++i )
             mRenderQueues[i].mQueuedRenderablesPerThread.resize( sceneManager->getNumWorkerThreads() );
 
-        // Set some defaults.
-        setRenderQueueMode( 0, FAST );
-        setRenderQueueMode( 1, V1_FAST );
+        // Set some defaults:
+        // RQs [0; 100)   and [200; 225) are for v2 objects
+        // RQs [100; 200) and [225; 256) are for v1 objects
+        for( size_t i = 100u; i < 200u; ++i )
+            setRenderQueueMode( static_cast<uint8>( i ), V1_FAST );
+        for( size_t i = 225; i < 256u; ++i )
+            setRenderQueueMode( static_cast<uint8>( i ), V1_FAST );
     }
     //---------------------------------------------------------------------
     RenderQueue::~RenderQueue()
