@@ -98,7 +98,7 @@ namespace Ogre
 
         uint32      mHash;
 #if OGRE_DEBUG_MODE || OGRE_IDSTRING_ALWAYS_READABLE
-        #define OGRE_DEBUG_STR_SIZE 32
+        #define OGRE_DEBUG_STR_SIZE 64
         char        mDebugString[OGRE_DEBUG_STR_SIZE];
 #endif
 
