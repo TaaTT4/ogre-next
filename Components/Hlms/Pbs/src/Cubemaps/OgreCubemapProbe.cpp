@@ -47,9 +47,6 @@ THE SOFTWARE.
 #include "Vao/OgreConstBufferPacked.h"
 #include "Vao/OgreVaoManager.h"
 
-//Disable as OpenGL version of copyToTexture is super slow (makes a GPU->CPU->GPU roundtrip)
-#define USE_RTT_DIRECTLY 1
-
 namespace Ogre
 {
     CubemapProbe::CubemapProbe( ParallaxCorrectedCubemapBase *creator ) :
@@ -62,7 +59,6 @@ namespace Ogre
         mTexture( 0 ),
         mCubemapArrayIdx( std::numeric_limits<uint16>::max() ),
         mMsaa( 1u ),
-        mWorkspaceMipmapsExecMask( 0x01 ),
         mClearWorkspace( 0 ),
         mWorkspace( 0 ),
         mCamera( 0 ),
@@ -100,13 +96,16 @@ namespace Ogre
     {
         if( mWorkspace )
         {
-#if !USE_RTT_DIRECTLY
-            if( mStatic )
+            if( !mCreator->getAutomaticMode() )
             {
-                TextureGpu *channel = mWorkspace->getExternalRenderTargets()[0];
-                mCreator->releaseTmpRtt( channel.textures[0] );
+                const bool useManual = mTexture->getNumMipmaps() > 1u;
+                if( useManual )
+                {
+                    TextureGpu *channel = mWorkspace->getExternalRenderTargets()[0];
+                    mCreator->releaseTmpRtt( channel );
+                }
             }
-#endif
+
             if( mCreator->getAutomaticMode() )
             {
                 TextureGpu *channel = mWorkspace->getExternalRenderTargets()[0];
@@ -313,26 +312,14 @@ namespace Ogre
             LwString texName( LwString::FromEmptyPointer( tmpBuffer, sizeof(tmpBuffer) ) );
             texName.a( "CubemapProbe_", Id::generateNewId<CubemapProbe>() );
 
-#if !USE_RTT_DIRECTLY
-            const uint32 flags = isStatic ? TU_STATIC_WRITE_ONLY : (TU_RENDERTARGET|TU_AUTOMIPMAP);
-#else
-    #if GENERATE_MIPMAPS_ON_BLEND
             uint32 flags = TextureFlags::RenderToTexture;
-    #else
-            const uint32 flags = TextureFlags::RenderToTexture|TextureFlags::AllowAutomipmaps;
-    #endif
-#endif
-
-#if GENERATE_MIPMAPS_ON_BLEND
             uint8 numMips = 1u;
+
             if( useManual )
             {
-                numMips = PixelFormatGpuUtils::getMaxMipmapCount( width, height );
-                flags |= TextureFlags::AllowAutomipmaps;
+                numMips = mCreator->getIblNumMipmaps( width, height );
+                flags = mCreator->getIblTargetTextureFlags( pf );
             }
-#else
-            const uint numMips = PixelUtil::getMaxMipmapCount( width, height, 1 );
-#endif
 
             mMsaa = msaa;
             msaa = isStatic ? 0 : msaa;
@@ -351,7 +338,7 @@ namespace Ogre
             mDirty = true;
 
             if( reinitWorkspace && !mCreator->getAutomaticMode() )
-                initWorkspace( cameraNear, cameraFar, mWorkspaceMipmapsExecMask, mWorkspaceDefName );
+                initWorkspace( cameraNear, cameraFar, mWorkspaceDefName );
         }
         else
         {
@@ -362,9 +349,7 @@ namespace Ogre
         }
     }
     //-----------------------------------------------------------------------------------
-    void CubemapProbe::initWorkspace( float cameraNear, float cameraFar,
-                                      uint8 mipmapsExecutionMask,
-                                      IdString workspaceDefOverride )
+    void CubemapProbe::initWorkspace( float cameraNear, float cameraFar, IdString workspaceDefOverride )
     {
         assert( (mTexture != 0 || mCreator->getAutomaticMode()) && "Call setTextureParams first!" );
 
@@ -392,15 +377,22 @@ namespace Ogre
         mCamera->setFarClipDistance( cameraFar );
 
         TextureGpu *rtt = mTexture;
+        TextureGpu *ibl = mTexture;
 
         if( mCreator->getAutomaticMode() )
+        {
             rtt = mCreator->findTmpRtt( mTexture );
+            ibl = mCreator->findIbl( mTexture );
+        }
+        else
+        {
+            const bool useManual = mTexture->getNumMipmaps() > 1u;
+            if( useManual )
+                rtt = mCreator->findTmpRtt( mTexture );
+        }
+
         if( mStatic )
         {
-#if !USE_RTT_DIRECTLY
-            //Grab tmp texture
-            rtt = mCreator->findTmpRtt( mTexture );
-#endif
             //Set camera to skip light culling (efficiency)
             mCamera->setLightCullingVisibility( false, false );
         }
@@ -409,26 +401,15 @@ namespace Ogre
             mCamera->setLightCullingVisibility( true, true );
         }
 
-        mWorkspaceMipmapsExecMask = mipmapsExecutionMask;
-
         if( !mCreator->getAutomaticMode() )
             mTexture->_transitionTo( GpuResidency::Resident, (uint8*)0 );
-        else
-        {
-            if( mCreator->getUseDpm2DArray() )
-                mipmapsExecutionMask = ~mipmapsExecutionMask;
-            else
-                mipmapsExecutionMask = 0xff;
-        }
 
-        CompositorChannelVec channels( 1, rtt );
-        mWorkspace = compositorManager->addWorkspace( sceneManager, channels, mCamera,
-                                                      mWorkspaceDefName, false, -1,
-                                                      (UavBufferPackedVec*)0,
-                                                      (const ResourceLayoutMap*)0,
-                                                      (const ResourceAccessMap*)0,
-                                                      Vector4::ZERO,
-                                                      0x00, mipmapsExecutionMask );
+        CompositorChannelVec channels;
+        channels.reserve( 2u );
+        channels.push_back( rtt );
+        channels.push_back( ibl );
+        mWorkspace =
+            compositorManager->addWorkspace( sceneManager, channels, mCamera, mWorkspaceDefName, false );
         mWorkspace->setListener( mCreator );
 
         if( !mStatic && !mCreator->getAutomaticMode() )
@@ -455,7 +436,11 @@ namespace Ogre
         mOrientation        = orientation;
         mInvOrientation     = mOrientation.Inverse();
         mProbeShape         = probeShape;
-        mProbeShape.mHalfSize *= 1.005; //Add some padding.
+
+        //Add some padding.
+        Real padding = 1.005f;
+        mArea.mHalfSize *= padding;
+        mProbeShape.mHalfSize *= padding;
 
         mAreaInnerRegion.makeCeil( Vector3::ZERO );
         mAreaInnerRegion.makeFloor( Vector3::UNIT_SCALE );
@@ -594,15 +579,7 @@ namespace Ogre
             mCreator->_setIsRendering( false );
 
         if( mStatic )
-        {
-#if !USE_RTT_DIRECTLY
-            //Copy from tmp RTT to real texture.
-            TextureGpu *channel = mWorkspace->getExternalRenderTargets()[0];
-            channel.textures[0]->copyToTexture( mTexture );
-#endif
-
             mCamera->setLightCullingVisibility( false, false );
-        }
 
         mCreator->_copyRenderTargetToCubemap( mCubemapArrayIdx );
     }
