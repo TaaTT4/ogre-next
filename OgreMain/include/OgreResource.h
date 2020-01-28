@@ -331,6 +331,14 @@ namespace Ogre {
             return mHandle;
         }
 
+        /** Returns true if the Resource has been unloaded, false otherwise.
+        */
+        virtual bool isUnloaded(void) const 
+        { 
+            // No lock required to read this state since no modify
+            return (mLoadingState.get() == LOADSTATE_UNLOADED); 
+        }
+
         /** Returns true if the Resource has been prepared, false otherwise.
         */
         virtual bool isPrepared(void) const 
@@ -347,12 +355,41 @@ namespace Ogre {
             return (mLoadingState.get() == LOADSTATE_LOADED); 
         }
 
+        /** Change the Resource loading state to unloaded.
+        */
+        virtual void setToUnloaded(void) 
+        { 
+            mLoadingState.set(LOADSTATE_UNLOADED); 
+        }
+
+        /** Change the Resource loading state to prepared.
+        */
+        virtual void setToPrepared(void) 
+        { 
+            mLoadingState.set(LOADSTATE_PREPARED); 
+        }
+
         /** Change the Resource loading state to loaded.
         */
         virtual void setToLoaded(void) 
         { 
-            // No lock required to read this state since no modify
             mLoadingState.set(LOADSTATE_LOADED); 
+        }
+
+        /** Returns whether the resource is currently in the process of
+            background unloading.
+        */
+        virtual bool isUnloading() const
+        {
+            return (mLoadingState.get() == LOADSTATE_UNLOADING);
+        }
+
+        /** Returns whether the resource is currently in the process of
+            background preparing.
+        */
+        virtual bool isPreparing() const
+        {
+            return (mLoadingState.get() == LOADSTATE_PREPARING);
         }
 
         /** Returns whether the resource is currently in the process of
