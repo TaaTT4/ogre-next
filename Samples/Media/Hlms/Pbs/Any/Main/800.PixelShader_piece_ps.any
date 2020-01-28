@@ -133,6 +133,7 @@
 	@insertpiece( DeclIrradianceFieldFuncs )
 	@insertpiece( DeclRefractionsFuncs )
 	@insertpiece( DeclIrradianceSH )
+	@insertpiece( DeclLightProfilesTextureFuncs )
 @end
 
 
@@ -479,6 +480,13 @@
 				float spotAtten = saturate( (spotCosAngle - light0Buf.lights[@n].spotParams.y) * light0Buf.lights[@n].spotParams.x );
 				spotAtten = pow( spotAtten, light0Buf.lights[@n].spotParams.z );
 			@end
+
+			@property( light_profiles_texture )
+				spotAtten *= getPhotometricAttenuation( spotCosAngle,
+														light0Buf.lights[@n].lightTexProfileIdx
+														OGRE_PHOTOMETRIC_ARG );
+			@end
+
 			tmpColour = BRDF( lightDir, light0Buf.lights[@n].diffuse.xyz, light0Buf.lights[@n].specular, pixelData )@insertpiece( DarkenWithShadow );
 			float atten = 1.0 / (0.5 + (light0Buf.lights[@n].attenuation.y + light0Buf.lights[@n].attenuation.z * fDistance) * fDistance );
 			finalColour += tmpColour * (atten * spotAtten);
@@ -754,9 +762,15 @@
 
 				@property( debug_pssm_splits )
 					outPs_colour0.xyz = mix( outPs_colour0.xyz, debugPssmSplit.xyz, 0.2f );
+				@end				
+				@property( hlms_gen_normals_gbuffer )
+					outPs_normals = float4( pixelData.normal * 0.5 + 0.5, 1.0 );
 				@end
 			@else
 				outPs_colour0 = float4( 1.0, 1.0, 1.0, 1.0 );
+				@property( hlms_gen_normals_gbuffer )
+					outPs_normals = float4( 0.5, 0.5, 1.0, 1.0 );
+				@end
 			@end
 		@else
 			outPs_normals			= float4( pixelData.normal * 0.5 + 0.5, 1.0 );

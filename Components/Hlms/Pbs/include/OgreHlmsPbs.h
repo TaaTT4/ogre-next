@@ -163,6 +163,8 @@ namespace Ogre
         LightArray                mAreaLights;
         bool                    mUsingAreaLightMasks;
 
+        TextureGpu              *mLightProfilesTexture;
+
         bool                    mSkipRequestSlotInChangeRS;
 
         /// LTC matrix texture also contains BRDF LUT for specular IBL.
@@ -385,6 +387,9 @@ namespace Ogre
         void setAreaLightMasks( TextureGpu *areaLightMask );
         TextureGpu* getAreaLightMasks(void) const           { return mAreaLightMasks; }
 
+        void setLightProfilesTexture( TextureGpu *lightProfilesTex );
+        TextureGpu *getLightProfilesTexture( void ) const   { return mLightProfilesTexture; }
+
 #ifdef OGRE_BUILD_COMPONENT_PLANAR_REFLECTIONS
         void setPlanarReflections( PlanarReflections *planarReflections );
         PlanarReflections* getPlanarReflections(void) const;
@@ -508,6 +513,7 @@ namespace Ogre
         static const IdString AmbientHemisphere;
         static const IdString AmbientSh;
         static const IdString AmbientShMonochrome;
+        static const IdString LightProfilesTexture;
         static const IdString LtcTextureAvailable;
         static const IdString EnvMapScale;
         static const IdString AmbientFixed;
