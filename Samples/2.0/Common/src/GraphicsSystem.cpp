@@ -254,9 +254,6 @@ namespace Demo
         #endif
         #if defined(SDL_VIDEO_DRIVER_COCOA)
         case SDL_SYSWM_COCOA:
-            //required to make OGRE play nice with our window
-            params.insert( std::make_pair("macAPICocoaUseNSView", "true") );
-
             winHandle  = Ogre::StringConverter::toString(WindowContentViewHandle(wmInfo));
             break;
         #endif
@@ -281,7 +278,7 @@ namespace Demo
 
         params.insert( std::make_pair("title", windowTitle) );
         params.insert( std::make_pair("gamma", cfgOpts["sRGB Gamma Conversion"].currentValue) );
-        params.insert( std::make_pair("MSAA", cfgOpts["MSAA"].currentValue) );
+        params.insert( std::make_pair("FSAA", cfgOpts["FSAA"].currentValue) );
         params.insert( std::make_pair("vsync", cfgOpts["VSync"].currentValue) );
         params.insert( std::make_pair("reverse_depth", "Yes" ) );
 
@@ -979,8 +976,8 @@ namespace Demo
                                           gEnt->mTransform[currIdx]->vScale, mThreadWeight );
             gEnt->mSceneNode->setScale( interpVec );
 
-            Ogre::Quaternion interpQ = Ogre::Math::lerp( gEnt->mTransform[prevIdx]->qRot,
-                                                         gEnt->mTransform[currIdx]->qRot, mThreadWeight );
+            Ogre::Quaternion interpQ = Ogre::Quaternion::nlerp(
+                mThreadWeight, gEnt->mTransform[prevIdx]->qRot, gEnt->mTransform[currIdx]->qRot, true );
             gEnt->mSceneNode->setOrientation( interpQ );
 
             ++itor;

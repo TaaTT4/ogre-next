@@ -194,6 +194,25 @@ namespace Ogre {
         void convertFromTexture( TextureGpu *texture, uint8 minMip, uint8 maxMip,
                                  bool automaticResolve=true );
 
+        /** Synchronously downloads the mip 0 from a TextureGpu into the TextureBox.
+            This function is for convenience for when going async is not important.
+        @param srcBox
+            Source region of source texture to download. 
+            Only x, y, z, sliceStart, width, height, depth, numSlices fields are used.
+        @param dstBox
+            Together with dstFormat describes the destination memory region.
+            It is explicitly allowed for this region to be non-contiguous.
+        @param dstFormat
+            Together with dstBox describes the destination memory region.
+            This format is not required to be the same as the format of the source texture,
+            it could be any supported by bulkPixelConversion, including 24bpp formats.
+        @param automaticResolve
+            When true, we will take care of resolving explicit MSAA textures if necessary,
+            so that the download from GPU works fine.
+        */
+        static void copyContentsToMemory( TextureGpu *srcTexture, TextureBox srcBox, TextureBox dstBox,
+                                          PixelFormatGpu dstFormat, bool automaticResolve = true );
+
         /** Synchronously uploads the selected mips from this Image into a TextureGpu.
             This function is for convenience for when going async is not important.
         @param texture
@@ -327,7 +346,6 @@ namespace Ogre {
             FILTER_GAUSSIAN_HIGH,
         };
 
-#if 0
         /** Scale a 1D, 2D or 3D image volume. 
             @param  src         PixelBox containing the source pointer, dimensions and format
             @param  dst         PixelBox containing the destination pointer, dimensions and format
@@ -335,11 +353,11 @@ namespace Ogre {
             @remarks    This function can do pixel format conversion in the process.
             @note   dst and src can point to the same PixelBox object without any problem
         */
-        static void scale(const PixelBox &src, const PixelBox &dst, Filter filter = FILTER_BILINEAR);
+        static void scale( const TextureBox &src, PixelFormatGpu srcFormat,
+                           TextureBox &dst, PixelFormatGpu dstFormat, Filter filter = FILTER_BILINEAR );
         
         /** Resize a 2D image, applying the appropriate filter. */
         void resize( uint32 width, uint32 height, Filter filter = FILTER_BILINEAR );
-#endif
 
         /** Sets the proper downsampler functions to generate mipmaps
         @param format
