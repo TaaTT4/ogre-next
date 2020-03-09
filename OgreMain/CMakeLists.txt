@@ -44,7 +44,8 @@ include(PrecompiledHeader)
 # define header and source files for the library
 file(GLOB HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/*.inl")
-file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.inl")
 
 add_filtered_std("Animation")
 add_filtered_std("CommandBuffer")
@@ -65,6 +66,7 @@ add_filtered_std("Hash")
 add_filtered_std("Math/Array")
 add_filtered_std("Math/Simple")
 add_filtered_std("Math/Simple/C")
+add_filtered_std("ogrestd")
 add_filtered_std("Vao")
 
 list(APPEND HEADER_FILES ${OGRE_BINARY_DIR}/include/OgreBuildSettings.h
