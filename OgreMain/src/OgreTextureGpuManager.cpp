@@ -53,8 +53,11 @@ THE SOFTWARE.
 #include "OgreRenderSystem.h"
 #include "OgreException.h"
 #include "OgreLogManager.h"
+#include "OgreString.h"
 
 #include "OgreProfiler.h"
+
+#include <fstream>
 
 #if !OGRE_NO_JSON
     #include "rapidjson/document.h"
@@ -1152,7 +1155,8 @@ namespace Ogre
                     pool.masterTexture->getNumMipmaps(), "|" );
             const size_t bytesInPool = pool.masterTexture->getSizeBytes();
             text.a( (uint32)bytesInPool, "|" );
-            text.a( pool.usedMemory, "|", pool.masterTexture->getDepthOrSlices() );
+            text.a( pool.usedMemory - (uint16)pool.availableSlots.size(), "|",
+                    pool.masterTexture->getDepthOrSlices() );
             text.a( "|", pool.masterTexture->getTexturePoolId() );
 
             bytesInPoolInclWaste += bytesInPool;
@@ -1196,7 +1200,7 @@ namespace Ogre
             text.a( entry.texture->getDepth(), "|", entry.texture->getNumSlices(), "|" );
             text.a( PixelFormatGpuUtils::toString( entry.texture->getPixelFormat() ), "|",
                     entry.texture->getNumMipmaps(), "|" );
-            text.a( entry.texture->getMsaa(), "|",
+            text.a( entry.texture->getSampleDescription().getColourSamples(), "|",
                     (uint32)bytesTexture, "|" );
             text.a( entry.texture->isRenderToTexture(), "|",
                     entry.texture->isUav(), "|",
@@ -1535,6 +1539,11 @@ namespace Ogre
     RenderSystem* TextureGpuManager::getRenderSystem(void) const
     {
         return mRenderSystem;
+    }
+    //-----------------------------------------------------------------------------------
+    VaoManager* TextureGpuManager::getVaoManager(void) const
+    {
+        return mVaoManager;
     }
     //-----------------------------------------------------------------------------------
     void TextureGpuManager::scheduleLoadRequest( TextureGpu *texture,
@@ -3282,7 +3291,7 @@ namespace Ogre
         srcImage._setAutoDelete( false );
         image = srcImage;
 
-        uint32 numMipSlices = numMips * numSlices;
+        uint64 numMipSlices = numMips * numSlices;
 
         assert( numMipSlices < 256u );
 
@@ -3295,7 +3304,7 @@ namespace Ogre
             }
             else
             {
-                mipLevelBitSet[i] = (1ul << numMipSlices) - 1ul;
+                mipLevelBitSet[i] = ( uint64( 1ul ) << numMipSlices ) - uint64( 1ul );
                 numMipSlices = 0;
             }
         }

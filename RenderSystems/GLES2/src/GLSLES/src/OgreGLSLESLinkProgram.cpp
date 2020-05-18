@@ -37,6 +37,8 @@ THE SOFTWARE.
 #include "OgreGLES2Util.h"
 #include "OgreGLES2RenderSystem.h"
 
+#include <sstream>
+
 namespace Ogre {
 
     GLSLESLinkProgram::GLSLESLinkProgram(GLSLESShader* vertexProgram, GLSLESShader* fragmentProgram)
@@ -122,7 +124,7 @@ namespace Ogre {
                     mVertexShader->getOptimiserEnabled() &&
                     mFragmentShader->getOptimiserEnabled())
                 {
-                    LogManager::getSingleton().stream() << "Try not optimised shader."; 
+                    LogManager::getSingleton().stream() << "Try not optimised shader.";
                     mTriedToLinkAndFailed = false;
                     mVertexShader->setOptimiserEnabled(false);
                     mFragmentShader->setOptimiserEnabled(false);

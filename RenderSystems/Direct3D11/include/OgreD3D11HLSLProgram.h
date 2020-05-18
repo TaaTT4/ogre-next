@@ -33,7 +33,7 @@ THE SOFTWARE.
 #include "OgreHighLevelGpuProgram.h"
 #include "OgreHardwareUniformBuffer.h"
 #include "Vao/OgreVertexBufferPacked.h"
-
+#include "OgreString.h"
 
 namespace Ogre {
     typedef vector<byte>::type MicroCode;
@@ -140,7 +140,6 @@ namespace Ogre {
 
         bool mErrorsInCompile;
         MicroCode mMicroCode;
-        ComPtr<ID3D11Buffer> mConstantBuffer;
         
         D3D_SHADER_MACRO* mShaderMacros;
         bool shaderMacroSet;
@@ -314,7 +313,6 @@ namespace Ogre {
         MemberTypeNames mMemberTypeName;
         InterfaceSlots mInterfaceSlots;
 
-        void createConstantBuffer(const UINT ByteWidth);
         void analizeMicrocode();
         void getMicrocodeFromCache(void);
         void compileMicrocode(void);
@@ -371,7 +369,7 @@ namespace Ogre {
         // Get slot for a specific interface
         unsigned int getSubroutineSlot(const String& subroutineSlotName) const;
 
-        ID3D11InputLayout* getLayoutForPso( const VertexElement2VecVec &vertexElements );
+        ComPtr<ID3D11InputLayout> getLayoutForPso( const VertexElement2VecVec &vertexElements );
 
         void CreateVertexShader();
         void CreatePixelShader();

@@ -44,7 +44,7 @@ namespace Ogre
 
         struct CachedResourceView
         {
-            ID3D11UnorderedAccessView   *mResourceView;
+            ComPtr<ID3D11UnorderedAccessView> mResourceView;
             uint32                      mOffset;
             uint32                      mSize;
         };
@@ -65,7 +65,7 @@ namespace Ogre
 
         ID3D11UnorderedAccessView* _bindBufferCommon( size_t offset, size_t sizeBytes );
 
-        ID3D11UnorderedAccessView* createUav( const DescriptorSetUav::BufferSlot &bufferSlot ) const;
+        ComPtr<ID3D11UnorderedAccessView> createUav( const DescriptorSetUav::BufferSlot &bufferSlot ) const;
 
 //        virtual void bindBufferVS( uint16 slot, size_t offset=0, size_t sizeBytes=0 );
 //        virtual void bindBufferPS( uint16 slot, size_t offset=0, size_t sizeBytes=0 );

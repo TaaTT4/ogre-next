@@ -71,6 +71,18 @@ namespace Ogre
         TEXCALC_PROJECTIVE_TEXTURE
     };
 
+    /// Render window creation parameters.
+    struct RenderWindowDescription
+    {
+        String              name;
+        unsigned int        width;
+        unsigned int        height;
+        bool                useFullScreen;
+        NameValuePairList   miscParams;
+    };
+
+    /// Render window creation parameters container.
+    typedef vector<RenderWindowDescription>::type RenderWindowDescriptionList;
 
     /** Defines the functionality of a 3D API
     @remarks
@@ -224,6 +236,11 @@ namespace Ogre
         */
         virtual void shutdown(void);
 
+        /** Some render systems have moments when GPU device is temporarily unavailable,
+            for example when D3D11 device is lost, or when iOS app is in background, etc.
+         */
+        virtual bool validateDevice( bool forceDeviceElection = false ) { return true; }
+
         /** Sets whether or not W-buffers are enabled if they are available for this renderer.
         @param
         enabled If true and the renderer supports them W-buffers will be used.  If false 
@@ -235,6 +252,11 @@ namespace Ogre
         /** Returns true if the renderer will try to use W-buffers when available.
         */
         bool getWBufferEnabled(void) const;
+
+        /** Returns supported sample description for requested FSAA mode, with graceful downgrading.
+        */
+        virtual SampleDescription validateSampleDescription( const SampleDescription &sampleDesc,
+                                                             PixelFormatGpu format );
 
         /** Creates a new rendering window.
         @remarks
@@ -1192,7 +1214,7 @@ namespace Ogre
         {
         public:
             Listener() {}
-            virtual ~Listener() {}
+            virtual ~Listener();
 
             /** A rendersystem-specific event occurred.
             @param eventName The name of the event which has occurred

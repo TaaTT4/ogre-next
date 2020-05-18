@@ -107,7 +107,7 @@ namespace Ogre {
         {
         public:
             Listener() {}
-            virtual ~Listener() {}
+            virtual ~Listener();
 
             /// Called prior to the scene being rendered with this camera
             virtual void cameraPreRenderScene(Camera* cam)
@@ -174,7 +174,7 @@ namespace Ogre {
         /// Is viewing window used.
         bool mWindowSet;
         /// Windowed viewport clip planes 
-        mutable vector<Plane>::type mWindowClipPlanes;
+        mutable PlaneList mWindowClipPlanes;
         /// Was viewing window changed.
         mutable bool mRecalcWindow;
         /// The last viewport to be added using this camera
@@ -581,7 +581,7 @@ namespace Ogre {
         /// Returns if a viewport window is being used
         virtual bool isWindowSet(void) const { return mWindowSet; }
         /// Gets the window clip planes, only applicable if isWindowSet == true
-        const vector<Plane>::type& getWindowPlanes(void) const;
+        const PlaneList &getWindowPlanes( void ) const;
 
         /** Get the auto tracking target for this camera, if any. */
         SceneNode* getAutoTrackTarget(void) const { return mAutoTrackTarget; }

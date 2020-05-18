@@ -51,11 +51,12 @@ namespace Ogre
         "specular_fresnel",
         "metallic"
     };
-    const char* c_transparencyModes[HlmsPbsDatablock::Fade+1] =
+    const char* c_transparencyModes[HlmsPbsDatablock::Refractive+1] =
     {
         "None",
         "Transparent",
-        "Fade"
+        "Fade",
+        "Refractive"
     };
 
     HlmsJsonPbs::HlmsJsonPbs( HlmsManager *hlmsManager, TextureGpuManager *textureManager,
@@ -673,13 +674,14 @@ namespace Ogre
                 const String *aliasName = mTextureManager->findAliasNameStr( texture->getName() );
                 if( texName && aliasName )
                 {
+                    String finalAliasName = *aliasName;
                     String finalTexName = *texName;
-                    mListener->savingChangeTextureName( finalTexName );
+                    mListener->savingChangeTextureName( finalAliasName, finalTexName );
 
-                    if( finalTexName != *aliasName )
+                    if( finalTexName != finalAliasName )
                     {
                         outString += ",\n\t\t\t\t\"texture\" : [\"";
-                        outString += *aliasName;
+                        outString += finalAliasName;
                         outString += "\", \"";
                         outString += finalTexName;
                         outString += "\"]";

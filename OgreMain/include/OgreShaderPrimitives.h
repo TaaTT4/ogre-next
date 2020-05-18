@@ -57,6 +57,11 @@ namespace Ogre
             w( static_cast<T>( valZW.y ) )
         {
         }
+
+        Vector3 toVec3() const
+        {
+            return Vector3( static_cast<Real>( x ), static_cast<Real>( y ), static_cast<Real>( z ) );
+        }
     };
 
     struct float2
@@ -89,6 +94,20 @@ namespace Ogre
         float4x4( const Matrix4 &val )
         {
             for( size_t i = 0u; i < 16u; ++i )
+                _m[i] = static_cast<float>( val[0][i] );
+        }
+    };
+    struct float4x3
+    {
+        union {
+            float m[3][4];
+            float _m[12];
+        };
+
+        float4x3() {}
+        float4x3( const Matrix4 &val )
+        {
+            for( size_t i = 0u; i < 12u; ++i )
                 _m[i] = static_cast<float>( val[0][i] );
         }
     };

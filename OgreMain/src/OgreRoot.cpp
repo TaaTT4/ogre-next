@@ -59,6 +59,7 @@ THE SOFTWARE.
 #include "OgreLight.h"
 #include "OgreRectangle2D2.h"
 #include "OgreManualObject.h"
+#include "OgreManualObject2.h"
 #include "OgrePlatformInformation.h"
 #include "OgreConvexBody.h"
 #include "OgreFrameStats.h"
@@ -73,6 +74,7 @@ THE SOFTWARE.
 #include "OgreHlmsLowLevel.h"
 #include "Animation/OgreSkeletonManager.h"
 #include "Compositor/OgreCompositorManager2.h"
+#include "OgreString.h"
 
 #if OGRE_NO_FREEIMAGE == 0
 #include "OgreFreeImageCodec2.h"
@@ -110,6 +112,9 @@ THE SOFTWARE.
 #  include "OgreASTCCodec.h"
 #endif
 
+#include <fstream>
+#include <sstream>
+
 namespace Ogre {
     //-----------------------------------------------------------------------
     template<> Root* Singleton<Root>::msSingleton = 0;
@@ -139,6 +144,7 @@ namespace Ogre {
       , mFrameSmoothingTime(0.0f)
       , mRemoveQueueStructuresOnClear(false)
       , mDefaultMinPixelSize(0)
+      , mLightProfilesInvHeight(1.0f)
       , mNextMovableObjectTypeFlag(1)
       , mIsInitialised(false)
       , mFrameStarted( false )
@@ -917,6 +923,10 @@ namespace Ogre {
             OgreProfileGpuBeginDynamicHashed( frameNum.c_str(), &hashValue );
         }
 #endif
+
+        if(!mActiveRenderer->validateDevice())
+            return false;
+
         _syncAddedRemovedFrameListeners();
 
         // Tell all listeners

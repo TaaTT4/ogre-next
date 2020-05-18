@@ -41,6 +41,8 @@ THE SOFTWARE.
 #include "OgreLodStrategy.h"
 #include <cstddef>
 
+#include <sstream>
+
 // Ignore annoying warnings on GCC
 #if defined(__MINGW32__) || defined(__GNUC__)
     #pragma GCC diagnostic ignored "-Wswitch"

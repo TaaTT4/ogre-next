@@ -35,6 +35,8 @@
 #include "OgreGLES2Util.h"
 #include "OgreRoot.h"
 
+#include <sstream>
+
 namespace Ogre
 {
     GLSLESProgramPipeline::GLSLESProgramPipeline(GLSLESShader* vertexShader, GLSLESShader* fragmentShader)

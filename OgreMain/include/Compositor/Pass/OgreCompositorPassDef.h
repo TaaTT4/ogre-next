@@ -36,6 +36,8 @@ THE SOFTWARE.
 #include "OgreResourceTransition.h"
 #include "OgreRenderPassDescriptor.h"
 
+#include "ogrestd/vector.h"
+
 namespace Ogre
 {
     class CompositorNodeDef;
@@ -57,6 +59,7 @@ namespace Ogre
         PASS_DEPTHCOPY,
         PASS_UAV,
         PASS_MIPMAP,
+        PASS_IBL_SPECULAR,
         PASS_COMPUTE,
         PASS_CUSTOM
     };
@@ -232,7 +235,7 @@ namespace Ogre
                 mStoreActionColour[i] = StoreAction::StoreOrResolve;
             }
         }
-        virtual ~CompositorPassDef() {}
+        virtual ~CompositorPassDef();
 
         void setAllClearColours( const ColourValue &clearValue );
         void setAllLoadActions( LoadAction::LoadAction loadAction );

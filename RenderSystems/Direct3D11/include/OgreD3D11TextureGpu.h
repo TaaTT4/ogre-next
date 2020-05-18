@@ -46,8 +46,7 @@ namespace Ogre
         /// To avoid creating multiple unnecessary copies of the SRV, we keep a cache of that
         /// default SRV with us; and calling createSrv with default params will return
         /// this cache instead.
-        /// mDefaultDisplaySrv will increase its ref count every time createSrv is called.
-        ID3D11ShaderResourceView *mDefaultDisplaySrv;
+        ComPtr<ID3D11ShaderResourceView> mDefaultDisplaySrv;
 
         /// This will not be owned by us if hasAutomaticBatching is true.
         /// It will also not be owned by us if we're not in GpuResidency::Resident
@@ -68,14 +67,14 @@ namespace Ogre
         ///     2. The texture
         ///     3. An msaa texture (hasMsaaExplicitResolves == true)
         ///     4. The msaa resolved texture (hasMsaaExplicitResolves==false)
-        ID3D11Resource  *mFinalTextureName;
+        ComPtr<ID3D11Resource> mFinalTextureName;
 
 
         /// Only used when hasMsaaExplicitResolves() == false.
-        ID3D11Resource  *mMsaaFramebufferName;
+        ComPtr<ID3D11Resource> mMsaaFramebufferName;
 
         void create1DTexture(void);
-        void create2DTexture(void);
+        void create2DTexture( bool msaaTextureOnly = false );
         void create3DTexture(void);
 
         virtual void createInternalResourcesImpl(void);
@@ -94,7 +93,8 @@ namespace Ogre
         virtual void setTextureType( TextureTypes::TextureTypes textureType );
 
         virtual void copyTo( TextureGpu *dst, const TextureBox &dstBox, uint8 dstMipLevel,
-                             const TextureBox &srcBox, uint8 srcMipLevel );
+                             const TextureBox &srcBox, uint8 srcMipLevel,
+                             bool keepResolvedTexSynced = true );
 
         virtual void _setToDisplayDummyTexture(void);
         virtual void _notifyTextureSlotChanged( const TexturePool *newPool, uint16 slice );
@@ -102,11 +102,11 @@ namespace Ogre
         virtual void _autogenerateMipmaps(void);
 
         //The returned pointer has its ref. count incremented! Caller must decrease it!
-        ID3D11ShaderResourceView* createSrv( const DescriptorSetTexture2::TextureSlot &texSlot ) const;
-        ID3D11ShaderResourceView* createSrv(void) const;
-        ID3D11ShaderResourceView* getDefaultDisplaySrv(void) const  { return mDefaultDisplaySrv; }
+        ComPtr<ID3D11ShaderResourceView> createSrv( const DescriptorSetTexture2::TextureSlot &texSlot ) const;
+        ComPtr<ID3D11ShaderResourceView> createSrv(void) const;
+        ID3D11ShaderResourceView* getDefaultDisplaySrv(void) const  { return mDefaultDisplaySrv.Get(); }
 
-        ID3D11UnorderedAccessView* createUav( const DescriptorSetUav::TextureSlot &texSlot ) const;
+        ComPtr<ID3D11UnorderedAccessView> createUav( const DescriptorSetUav::TextureSlot &texSlot ) const;
 
         virtual bool isMsaaPatternSupported( MsaaPatterns::MsaaPatterns pattern );
         virtual void getSubsampleLocations( vector<Vector2>::type locations );
@@ -114,8 +114,8 @@ namespace Ogre
         virtual void getCustomAttribute( IdString name, void *pData );
 
         ID3D11Resource* getDisplayTextureName(void) const   { return mDisplayTextureName; }
-        ID3D11Resource* getFinalTextureName(void) const     { return mFinalTextureName; }
-        ID3D11Resource* getMsaaFramebufferName(void) const  { return mMsaaFramebufferName; }
+        ID3D11Resource* getFinalTextureName(void) const     { return mFinalTextureName.Get(); }
+        ID3D11Resource* getMsaaFramebufferName(void) const  { return mMsaaFramebufferName.Get(); }
     };
 
     class _OgreD3D11Export D3D11TextureGpuRenderTarget : public D3D11TextureGpu

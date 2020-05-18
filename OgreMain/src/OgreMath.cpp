@@ -36,6 +36,12 @@ THE SOFTWARE.
 #include "OgreSphere.h"
 #include "OgreAxisAlignedBox.h"
 #include "OgrePlane.h"
+#include "OgreDualQuaternion.h"
+#include "OgreColourValue.h"
+
+#include "ogrestd/list.h"
+
+#include <sstream>
 
 
 namespace Ogre
@@ -240,7 +246,34 @@ namespace Ogre
        else
            return degrees;
     }
+    //-----------------------------------------------------------------------
+    Vector2 Math::octahedronMappingWrap( Vector2 v )
+    {
+        Vector2 retVal;
+        retVal.x = ( Real( 1.0f ) - Abs( v.y ) ) * ( v.x >= 0 ? Real( 1.0f ) : -Real( 1.0f ) );
+        retVal.y = ( Real( 1.0f ) - Abs( v.x ) ) * ( v.y >= 0 ? Real( 1.0f ) : -Real( 1.0f ) );
+        return retVal;
+    }
+    //-----------------------------------------------------------------------
+    Vector2 Math::octahedronMappingEncode( Vector3 n )
+    {
+        n /= ( abs( n.x ) + abs( n.y ) + abs( n.z ) );
+        Vector2 nxy = n.z >= 0 ? n.xy() : octahedronMappingWrap( n.xy() );
+        nxy = nxy * Real( 0.5f ) + Real( 0.5f );
+        return nxy;
+    }
+    //-----------------------------------------------------------------------
+    Vector3 Math::octahedronMappingDecode( Vector2 f )
+    {
+        f = f * Real( 2.0f ) - Real( 1.0f );
 
+        // https://twitter.com/Stubbesaurus/status/937994790553227264
+        Vector3 n = Vector3( f.x, f.y, Real( 1.0f ) - Abs( f.x ) - Abs( f.y ) );
+        float t = saturate( -n.z );
+        n.x += n.x >= 0 ? -t : t;
+        n.y += n.y >= 0 ? -t : t;
+        return n.normalisedCopy();
+    }
     //-----------------------------------------------------------------------
     bool Math::pointInTri2D(const Vector2& p, const Vector2& a, 
         const Vector2& b, const Vector2& c)
@@ -366,18 +399,18 @@ namespace Ogre
     }
     //-----------------------------------------------------------------------
     std::pair<bool, Real> Math::intersects(const Ray& ray, 
-        const vector<Plane>::type& planes, bool normalIsOutside)
+        const StdVector<Plane>& planes, bool normalIsOutside)
     {
-        list<Plane>::type planesList;
-        for (vector<Plane>::type::const_iterator i = planes.begin(); i != planes.end(); ++i)
+        StdList<Plane> planesList;
+        for (StdVector<Plane>::const_iterator i = planes.begin(); i != planes.end(); ++i)
         {
             planesList.push_back(*i);
         }
         return intersects(ray, planesList, normalIsOutside);
     }
     //-----------------------------------------------------------------------
-    std::pair<bool, Real> Math::intersects(const Ray& ray, 
-        const list<Plane>::type& planes, bool normalIsOutside)
+    std::pair<bool, Real> Math::intersects(const Ray& ray,
+        const StdList<Plane>& planes, bool normalIsOutside)
     {
         list<Plane>::type::const_iterator planeit, planeitend;
         planeitend = planes.end();
@@ -985,5 +1018,112 @@ namespace Ogre
 
         return magnitude.length();
     }
+    //---------------------------------------------------------------------
+    //---------------------------------------------------------------------
+    //---------------------------------------------------------------------
+    Math::RandomValueProvider::~RandomValueProvider() {}
+    //---------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const Radian &v )
+    {
+        o << "Radian(" << v.valueRadians() << ")";
+        return o;
+    }
+    //---------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const Degree &v )
+    {
+        o << "Degree(" << v.valueDegrees() << ")";
+        return o;
+    }
+    //-----------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const Vector2 &v )
+    {
+        o << "Vector2(" << v.x << ", " << v.y << ")";
+        return o;
+    }
+    //-----------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const Vector3 &v )
+    {
+        o << "Vector3(" << v.x << ", " << v.y << ", " << v.z << ")";
+        return o;
+    }
+    //-----------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const Vector4 &v )
+    {
+        o << "Vector4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+        return o;
+    }
+    //-----------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const Quaternion &q )
+    {
+        o << "Quaternion(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
+        return o;
+    }
+    //-----------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const DualQuaternion &q )
+    {
+        o << "DualQuaternion(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ", " << q.dw
+          << ", " << q.dx << ", " << q.dy << ", " << q.dz << ")";
+        return o;
+    }
+    //---------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const ColourValue &c )
+    {
+        o << "ColourValue(" << c.r << ", " << c.g << ", " << c.b << ", " << c.a << ")";
+        return o;
+    }
+    //-----------------------------------------------------------------------
+    std::ostream& operator <<( std::ostream& o, const Matrix3& mat )
+    {
+        // clang-format off
+        o << "Matrix3(" << mat[0][0] << ", " << mat[0][1] << ", " << mat[0][2] << ", "
+                        << mat[1][0] << ", " << mat[1][1] << ", " << mat[1][2] << ", "
+                        << mat[2][0] << ", " << mat[2][1] << ", " << mat[2][2] << ")";
+        // clang-format on
+        return o;
+    }
+    //-----------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const Matrix4 &mat )
+    {
+        o << "Matrix4(";
+        for (size_t i = 0; i < 4; ++i)
+        {
+            o << " row" << (unsigned)i << "{";
+            for(size_t j = 0; j < 4; ++j)
+            {
+                o << mat[i][j] << " ";
+            }
+            o << "}";
+        }
+        o << ")";
+        return o;
+    }
+    //---------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const AxisAlignedBox &aab )
+    {
+        switch (aab.mExtent)
+        {
+        case AxisAlignedBox::EXTENT_NULL:
+            o << "AxisAlignedBox(null)";
+            return o;
 
+        case AxisAlignedBox::EXTENT_FINITE:
+            o << "AxisAlignedBox(min=" << aab.mMinimum << ", max=" << aab.mMaximum << ")";
+            return o;
+
+        case AxisAlignedBox::EXTENT_INFINITE:
+            o << "AxisAlignedBox(infinite)";
+            return o;
+
+        default: // shut up compiler
+            assert( false && "Never reached" );
+            return o;
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    std::ostream &operator<<( std::ostream &o, const Plane &p )
+    {
+        o << "Plane(normal=" << p.normal << ", d=" << p.d << ")";
+        return o;
+    }
 }

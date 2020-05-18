@@ -73,8 +73,11 @@ Copyright (c) 2000-2014 Torus Knot Software Ltd
 #include "OgreDepthBuffer.h"
 #include "OgreWindow.h"
 #include "OgrePixelFormatGpuUtils.h"
+#include "OgreString.h"
 
 #include "OgreProfiler.h"
+
+#include <sstream>
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 extern "C" void glFlushRenderAPPLE();
@@ -145,7 +148,8 @@ static void APIENTRY GLDebugCallback(GLenum source,
     else
         strcpy(debSev, "unknown");
 
-    Ogre::LogManager::getSingleton().stream() << debSource << ":" << debType << "(" << debSev << ") " << id << ": " << message;
+    Ogre::LogManager::getSingleton().stream()
+        << debSource << ":" << debType << "(" << debSev << ") " << id << ": " << message;
 }
 #endif
 
@@ -394,6 +398,9 @@ namespace Ogre {
             rsc->setCapability(RSC_UAV);
             rsc->setCapability(RSC_TYPED_UAV_LOADS);
         }
+
+        if( mGLSupport->checkExtension( "GL_ARB_shader_viewport_layer_array" ) )
+            rsc->setCapability( RSC_VP_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER );
 
         rsc->setCapability(RSC_FBO);
         rsc->setCapability(RSC_HWRENDER_TO_TEXTURE);
@@ -2170,6 +2177,7 @@ namespace Ogre {
         GLSLShader::unbindAll();
 
         RenderSystem::_setPipelineStateObject( pso );
+        _setComputePso( 0 );
 
         uint8 newClipDistances = 0;
         if( pso )

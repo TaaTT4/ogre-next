@@ -48,18 +48,11 @@ namespace Ogre
         bool mHwGamma;
         bool mVisible;
 
-        /// Requested MSAA mode
-        uint mMsaa;
-        String mMsaaHint;
-        /// Effective MSAA mode, limited by hardware capabilities
-        DXGI_SAMPLE_DESC mMsaaDesc;
-
         // Window size depended resources - must be released
         // before swapchain resize and recreated later
         ComPtr<ID3D11Texture2D> mpBackBuffer;
         /// Optional, always holds up-to-date copy data from mpBackBuffer if not NULL
-        ComPtr<ID3D11Texture2D> mpBackBufferNoMSAA;
-        //ComPtr<ID3D11RenderTargetView> mRenderTargetView;
+        ComPtr<ID3D11Texture2D> mpBackBufferInterim;
 
         D3D11RenderSystem       *mRenderSystem;
 
@@ -91,9 +84,9 @@ namespace Ogre
         ComPtr<IDXGISwapChain1> mSwapChain1;
         //DXGI_SWAP_CHAIN_DESC_N  mSwapChainDesc;
 
-        /// Flag to determine if the swapchain flip sequential model is active.
+        /// Flag to determine if the swapchain flip model is active.
         /// Not supported before Win8.0, required for WinRT.
-        bool mUseFlipSequentialMode;
+        bool mUseFlipMode;
 
         // We save the previous present stats - so we can detect a "vblank miss"
         DXGI_FRAME_STATISTICS   mPreviousPresentStats;
@@ -104,12 +97,14 @@ namespace Ogre
 
     protected:
         DXGI_FORMAT _getSwapChainFormat();
+        DXGI_SWAP_CHAIN_FLAG _getSwapChainFlags();
         uint8 _getSwapChainBufferCount(void) const;
         void _createSwapChain();
         virtual HRESULT _createSwapChainImpl() = 0;
         void _destroySwapChain();
+        void _createSizeDependedD3DResources();
+        void _destroySizeDependedD3DResources();
         void resizeSwapChainBuffers( uint32 width, uint32 height );
-        void setResolutionFromSwapChain(void);
         void notifyResolutionChanged(void);
 
     public:
@@ -121,6 +116,9 @@ namespace Ogre
 
         virtual void _initialize( TextureGpuManager *textureGpuManager );
         virtual void destroy();
+
+        /// @copydoc Window::setFsaa
+        virtual void setFsaa(const String& fsaa);
 
         virtual void swapBuffers(void);
     };

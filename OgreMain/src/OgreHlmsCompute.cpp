@@ -53,6 +53,8 @@ THE SOFTWARE.
         #define OGRE_HASH128_FUNC MurmurHash3_x64_128
 #endif
 
+#include <fstream>
+
 namespace Ogre
 {
     const IdString ComputeProperty::ThreadsPerGroupX    = IdString( "threads_per_group_x" );
@@ -539,6 +541,8 @@ namespace Ogre
                                                    const String &sourceFilename,
                                                    const StringVector &includedPieceFiles )
     {
+        OGRE_ASSERT_MEDIUM( mComputeJobs.find( datablockName ) == mComputeJobs.end() );
+
         HlmsComputeJob *retVal = OGRE_NEW HlmsComputeJob( datablockName, this,
                                                           sourceFilename, includedPieceFiles );
         mComputeJobs[datablockName] = ComputeJobEntry( retVal, refName );

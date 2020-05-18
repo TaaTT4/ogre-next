@@ -89,7 +89,6 @@ namespace Ogre
 
         void freeDevice(void);
         void createDevice( const String &windowTitle );
-        static bool isWindows8OrGreater();
 
         v1::D3D11HardwareBufferManager* mHardwareBufferManager;
         D3D11GpuProgramManager* mGpuProgramManager;
@@ -127,9 +126,6 @@ namespace Ogre
 
         UINT                        mStencilRef;
 
-        ID3D11ShaderResourceView * mBoundTextures[OGRE_MAX_TEXTURE_LAYERS];
-        size_t mBoundTexturesCount;
-
         // List of class instances per shader stage
         ID3D11ClassInstance* mClassInstances[6][8];
 
@@ -140,9 +136,6 @@ namespace Ogre
         typedef std::map<String, ID3D11ClassInstance*> ClassInstanceMap;
         typedef std::map<String, ID3D11ClassInstance*>::iterator ClassInstanceIterator;
         ClassInstanceMap mInstanceMap;
-
-        size_t     mLastTextureUnitState;
-		bool       mSamplerStatesChanged;
 
         D3D11FrameBufferDescMap mFrameBufferDescMap;
 
@@ -189,7 +182,7 @@ namespace Ogre
 		
         void initRenderSystem();
 
-        virtual void initConfigOptions(void);
+        void initConfigOptions(void);
 
         // Overridden RenderSystem functions
         ConfigOptionMap& getConfigOptions(void);
@@ -233,7 +226,7 @@ namespace Ogre
         void setConfigOption( const String &name, const String &value );
         void reinitialise();
         void shutdown();
-        void validateDevice(bool forceDeviceElection = false);
+        bool validateDevice(bool forceDeviceElection = false);
         void handleDeviceLost();
         void setShadingType( ShadeOptions so );
         void setLightingEnabled( bool enabled );
@@ -337,7 +330,8 @@ namespace Ogre
         void preExtraThreadsStarted();
         void postExtraThreadsStarted();
 
-        DXGI_SAMPLE_DESC getMsaaSampleDesc(uint msaa, const String& msaaHint, PixelFormatGpu format);
+        virtual SampleDescription validateSampleDescription( const SampleDescription &sampleDesc,
+                                                             PixelFormatGpu format );
 
         /// @copydoc RenderSystem::getDisplayMonitorCount
         unsigned int getDisplayMonitorCount() const;

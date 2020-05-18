@@ -37,9 +37,8 @@ THE SOFTWARE.
     #define __has_builtin(x) 0
 #endif
 
-/** Undefine in <sys/endian.h> defined bswap macros for FreeBSD
- */
 #if OGRE_PLATFORM == OGRE_PLATFORM_FREEBSD
+    /// Undefine in <sys/endian.h> defined bswap macros for FreeBSD
     #undef bswap16
     #undef bswap32
     #undef bswap64
@@ -455,6 +454,34 @@ namespace Ogre {
         {
             // -128 & -127 both map to -1 according to D3D10 rules.
             return Ogre::max( v / 127.0f, -1.0f );
+        }
+
+        static inline uint32 ctz32( uint32 value )
+        {
+            if( value == 0 )
+                return 32u;
+
+        #if OGRE_COMPILER == OGRE_COMPILER_MSVC
+            unsigned long trailingZero = 0;
+            _BitScanForward( &trailingZero, value );
+            return trailingZero;
+        #else
+            return __builtin_ctz( value );
+        #endif
+        }
+
+        static inline uint32 clz32( uint32 value )
+        {
+            if( value == 0 )
+                return 32u;
+
+        #if OGRE_COMPILER == OGRE_COMPILER_MSVC
+            unsigned long lastBitSet = 0;
+            _BitScanReverse( &lastBitSet, value );
+            return 31u - lastBitSet;
+        #else
+            return __builtin_clz( value );
+        #endif
         }
 
         static inline uint32 ctz64( uint64 value )

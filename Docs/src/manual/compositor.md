@@ -356,9 +356,6 @@ architectures where the Z buffer is tied with the stencil buffer,
 clearing only the Z buffer hinders the driver from discarding the buffer
 entirely or using fast Z clears.
 
-Additionally, all passes can define the viewport area they will work on,
-meaning clearing specific regions is now possible.
-
 ### generate_mipmaps {#CompositorNodesPassesGenerateMipmaps}
 
 Generate\_mipmaps doesn't have special parameters other than the shared
@@ -1008,7 +1005,7 @@ Mostly relevant for UAVs but is also useful for rendering. See
 
 -   mipmaps \<num Mipmaps\>
 
-Default: 0; Indicates how many mipmaps to use. 0 for none. Use -1 to
+Default: 1; Indicates how many mipmaps to use. 1 for none. Use 0 to
 fill all mipmaps until 1x1
 
 -   automipmaps
@@ -1277,6 +1274,21 @@ declarations. The default is uniform.
 Only used by PSSM techniques. Specifies the number of splits per light.
 Can vary per shadow map. The number of splits must be greater than 2.
 Default is 3.
+
+-   num\_stable\_splits \<num\_stable\_splits\>
+
+PSSM tends to be very unstable to camera rotation changes. Rotate the camera around
+and the shadow mapping artifacts keep changing.
+
+setNumStableSplits allows you to fix that problem; by switching to ConcentricShadowCamera
+for the first N splits you specify; while the rest of the splits will use
+FocusedShadowCameraSetup.
+
+We achieve rotation stability by sacrificing overall quality. Using ConcentricShadowCamera
+on higher splits means sacrificing exponentially a lot more quality (and even performance);
+thus the recommended values are num\_stable\_splits = 1 or num\_stable\_splits = 2
+
+The default is num\_stable\_splits = 0 which disables the feature
 
 -   pssm\_lambda \<lambda\>
 

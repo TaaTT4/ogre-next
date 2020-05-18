@@ -128,7 +128,7 @@ namespace Ogre
         typedef vector<Vbo>::type VboVec;
         typedef vector<Vao>::type VaoVec;
         typedef map<VertexElement2Vec, Vbo>::type VboMap;
-        typedef vector<ID3D11Query*>::type D3D11SyncVec;
+        typedef vector<ComPtr<ID3D11Query> >::type D3D11SyncVec;
 
         VboVec  mVbos[NumInternalBufferTypes][BT_DYNAMIC_DEFAULT+1];
         /// MultiSource VBOs request a block from mVbo (i.e. they call allocateVbo) and thus do not
@@ -147,7 +147,7 @@ namespace Ogre
         D3D11SyncVec mFrameSyncVec;
 
         VertexBufferPacked  *mDrawId;
-        ID3D11Buffer        *mSplicingHelperBuffer;
+        ComPtr<ID3D11Buffer> mSplicingHelperBuffer;
 
         D3D11RenderSystem   *mD3D11RenderSystem;
 
@@ -320,8 +320,8 @@ namespace Ogre
         /// See VaoManager::isFrameFinished
         virtual bool isFrameFinished( uint32 frameCount );
 
-        static ID3D11Query* createFence( D3D11Device &device );
-        ID3D11Query* createFence(void);
+        static ComPtr<ID3D11Query> createFence( D3D11Device &device );
+        ComPtr<ID3D11Query> createFence(void);
 
         /** Will stall undefinitely until GPU finishes (signals the sync object).
         @param fenceName

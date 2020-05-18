@@ -34,6 +34,8 @@ THE SOFTWARE.
 #include "Compositor/Pass/OgreCompositorPassDef.h"
 #include "OgrePixelFormatGpu.h"
 
+#include "ogrestd/map.h"
+
 namespace Ogre
 {
     class RenderTarget;
@@ -138,6 +140,10 @@ namespace Ogre
         void populateTextureDependenciesFromExposedTextures(void);
 
         void executeResourceTransitions(void);
+
+        void notifyPassEarlyPreExecuteListeners(void);
+        void notifyPassPreExecuteListeners(void);
+        void notifyPassPosExecuteListeners(void);
 
     public:
         CompositorPass( const CompositorPassDef *definition, CompositorNode *parentNode );

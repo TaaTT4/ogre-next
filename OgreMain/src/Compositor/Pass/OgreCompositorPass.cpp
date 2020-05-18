@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include "Compositor/OgreCompositorNode.h"
 #include "Compositor/OgreCompositorNodeDef.h"
 #include "Compositor/OgreCompositorWorkspace.h"
+#include "Compositor/OgreCompositorWorkspaceListener.h"
 
 #include "OgrePixelFormatGpuUtils.h"
 #include "OgreViewport.h"
@@ -318,7 +319,7 @@ namespace Ogre
             }
 
             //Deal with MSAA resolve textures.
-            if( renderPassTargetAttachment->texture->getMsaa() > 1u )
+            if( renderPassTargetAttachment->texture->isMultisample() )
             {
                 if( renderPassTargetAttachment->storeAction == StoreAction::MultisampleResolve ||
                     renderPassTargetAttachment->storeAction == StoreAction::StoreAndMultisampleResolve ||
@@ -364,7 +365,7 @@ namespace Ogre
                                          "CompositorPass::setupRenderPassTarget" );
                         }
 
-                        if( renderPassTargetAttachment->resolveTexture->getMsaa() > 1u )
+                        if( renderPassTargetAttachment->resolveTexture->isMultisample() )
                         {
                             OGRE_EXCEPT( Exception::ERR_INVALIDPARAMS,
                                          "Cannot specify a non-MSAA texture for resolving an "
@@ -400,7 +401,7 @@ namespace Ogre
                 renderPassTargetAttachment->storeAction = StoreAction::DontCare;
             else
             {
-                if( renderPassTargetAttachment->texture->getMsaa() > 1u &&
+                if( renderPassTargetAttachment->texture->isMultisample() &&
                     renderPassTargetAttachment->resolveTexture )
                 {
                     renderPassTargetAttachment->storeAction = StoreAction::MultisampleResolve;
@@ -482,6 +483,48 @@ namespace Ogre
         }
 
         return retVal;
+    }
+    //-----------------------------------------------------------------------------------
+    void CompositorPass::notifyPassEarlyPreExecuteListeners(void)
+    {
+        const CompositorWorkspaceListenerVec& listeners = mParentNode->getWorkspace()->getListeners();
+
+        CompositorWorkspaceListenerVec::const_iterator itor = listeners.begin();
+        CompositorWorkspaceListenerVec::const_iterator end  = listeners.end();
+
+        while( itor != end )
+        {
+            (*itor)->passEarlyPreExecute( this );
+            ++itor;
+        }
+    }
+    //-----------------------------------------------------------------------------------
+    void CompositorPass::notifyPassPreExecuteListeners(void)
+    {
+        const CompositorWorkspaceListenerVec& listeners = mParentNode->getWorkspace()->getListeners();
+
+        CompositorWorkspaceListenerVec::const_iterator itor = listeners.begin();
+        CompositorWorkspaceListenerVec::const_iterator end  = listeners.end();
+
+        while( itor != end )
+        {
+            (*itor)->passPreExecute( this );
+            ++itor;
+        }
+    }
+    //-----------------------------------------------------------------------------------
+    void CompositorPass::notifyPassPosExecuteListeners(void)
+    {
+        const CompositorWorkspaceListenerVec& listeners = mParentNode->getWorkspace()->getListeners();
+
+        CompositorWorkspaceListenerVec::const_iterator itor = listeners.begin();
+        CompositorWorkspaceListenerVec::const_iterator end  = listeners.end();
+
+        while( itor != end )
+        {
+            (*itor)->passPosExecute( this );
+            ++itor;
+        }
     }
     //-----------------------------------------------------------------------------------
     void CompositorPass::addResourceTransition( ResourceLayoutMap::iterator currentLayout,

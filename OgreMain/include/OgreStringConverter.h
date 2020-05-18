@@ -36,6 +36,8 @@ THE SOFTWARE.
 #include "OgreMatrix4.h"
 #include "OgreVector2.h"
 
+#include <ios> // for fmtflags
+
 namespace Ogre {
 
     /** \addtogroup Core

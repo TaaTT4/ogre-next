@@ -84,12 +84,7 @@ namespace Ogre
         bool operator >= ( const Radian& r ) const { return mRad >= r.mRad; }
         bool operator >  ( const Radian& r ) const { return mRad >  r.mRad; }
 
-        inline _OgreExport friend std::ostream& operator <<
-            ( std::ostream& o, const Radian& v )
-        {
-            o << "Radian(" << v.valueRadians() << ")";
-            return o;
-        }
+        _OgreExport friend std::ostream &operator<<( std::ostream &o, const Radian &v );
     };
 
     /** Wrapper class which indicates a given angle value is in Degrees.
@@ -135,12 +130,7 @@ namespace Ogre
         bool operator >= ( const Degree& d ) const { return mDeg >= d.mDeg; }
         bool operator >  ( const Degree& d ) const { return mDeg >  d.mDeg; }
 
-        inline _OgreExport friend std::ostream& operator <<
-            ( std::ostream& o, const Degree& v )
-        {
-            o << "Degree(" << v.valueDegrees() << ")";
-            return o;
-        }
+        _OgreExport friend std::ostream &operator<<( std::ostream &o, const Degree &v );
     };
 
     /** Wrapper class which identifies a value as the currently default angle 
@@ -210,7 +200,7 @@ namespace Ogre
        class RandomValueProvider
        {
        public:
-            virtual ~RandomValueProvider() {}
+            virtual ~RandomValueProvider();
             /** When called should return a random values in the range of [0,1] */
             virtual Real getRandomUnit() = 0;
        };
@@ -512,6 +502,25 @@ namespace Ogre
        /** Convert from degrees to the current AngleUnit. */
        static Real DegreesToAngleUnits(Real degrees);
 
+    protected:
+       static Vector2 octahedronMappingWrap( Vector2 v );
+    public:
+       /// Takes a directional 3D vector n and returns a 2D value in range [0; 1]
+       /// Vector 'n' doesn't have to be normalized
+       static Vector2 octahedronMappingEncode( Vector3 n );
+       /// Takes a 2D value in range [0; 1] and returns a unit-length 3D vector
+       static Vector3 octahedronMappingDecode( Vector2 f );
+
+       /// Return closest power of two not smaller than given number
+       static uint32 ClosestPow2( uint32 x )
+       {
+           if( !( x & ( x - 1u ) ) )
+               return x;
+           while( x & ( x + 1u ) )
+               x |= ( x + 1u );
+           return x + 1u;
+       }
+
        /** Checks whether a given point is inside a triangle, in a
             2-dimensional (Cartesian) space.
             @remarks
@@ -665,7 +674,7 @@ namespace Ogre
         @param normalIsOutside Does the normal point outside the volume
         */
         static std::pair<bool, Real> intersects(
-            const Ray& ray, const vector<Plane>::type& planeList, 
+            const Ray& ray, const StdVector<Plane>& planeList,
             bool normalIsOutside);
         /** Ray / convex plane list intersection test. 
         @param ray The ray to test with
@@ -673,7 +682,7 @@ namespace Ogre
         @param normalIsOutside Does the normal point outside the volume
         */
         static std::pair<bool, Real> intersects(
-            const Ray& ray, const list<Plane>::type& planeList, 
+            const Ray& ray, const StdList<Plane>& planeList,
             bool normalIsOutside);
 
         /** Sphere / plane intersection test. 
