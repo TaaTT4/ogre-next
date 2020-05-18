@@ -70,6 +70,12 @@ namespace Ogre
             /// Use RSC_TEXTURE_GATHER to check whether it will be slow or not.
             PCF_4x4,
 
+            /// Better and slower than 4x4, same considerations
+            PCF_5x5,
+
+            /// Better and slower than 5x5, same considerations
+            PCF_6x6,
+
             /// High quality. Produces soft shadows. It's much more expensive but given
             /// its blurry results, you can reduce resolution and/or use less PSSM splits
             /// which gives you very competing performance with great results.
@@ -185,6 +191,7 @@ namespace Ogre
 #endif
         bool mSetupWorldMatBuf;
         bool mDebugPssmSplits;
+        bool mPerceptualRoughness;
 
         bool mAutoSpecIblMaxMipmap;
         bool mVctFullConeCount;
@@ -299,6 +306,23 @@ namespace Ogre
 
         void setDebugPssmSplits( bool bDebug );
         bool getDebugPssmSplits(void) const                 { return mDebugPssmSplits; }
+
+        /** Toggle whether the roughness value (set via material parameters and via roughness textures)
+            is perceptual or raw.
+
+            Ogre 2.1 and 2.2.0 used raw roughness<br/>
+            Ogre 2.2.1+ default to perceptual roughness to better match the output of other PBR tools
+
+            If you're porting from Ogre 2.1 you may want to disable this feature unless if you
+            want your materials to look exactly how they did in 2.2.0 and 2.1
+
+            See https://forums.ogre3d.org/viewtopic.php?f=25&t=95523
+        @param bPerceptualRoughness
+            True to enable perceptual roughess (default)
+            False to use raw roughess (Ogre 2.1's behavior)
+        */
+        void setPerceptualRoughness( bool bPerceptualRoughness );
+        bool getPerceptualRoughness( void ) const;
 
         void setShadowSettings( ShadowFilter filter );
         ShadowFilter getShadowFilter(void) const            { return mShadowFilter; }
@@ -423,12 +447,13 @@ namespace Ogre
     struct _OgreHlmsPbsExport PbsProperty
     {
         static const IdString useLightBuffers;
-    
+
         static const IdString HwGammaRead;
         static const IdString HwGammaWrite;
         static const IdString MaterialsPerBuffer;
         static const IdString LowerGpuOverhead;
         static const IdString DebugPssmSplits;
+        static const IdString PerceptualRoughness;
         static const IdString HasPlanarReflections;
 
         static const IdString NumTextures;
@@ -505,8 +530,7 @@ namespace Ogre
         static const IdString BlendModeIndex2;
         static const IdString BlendModeIndex3;
 
-        static const IdString Pcf3x3;
-        static const IdString Pcf4x4;
+        static const IdString Pcf;
         static const IdString PcfIterations;
         static const IdString ExponentialShadowMaps;
 

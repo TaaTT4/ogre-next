@@ -87,6 +87,7 @@ namespace Ogre
     const IdString PbsProperty::MaterialsPerBuffer= IdString( "materials_per_buffer" );
     const IdString PbsProperty::LowerGpuOverhead  = IdString( "lower_gpu_overhead" );
     const IdString PbsProperty::DebugPssmSplits   = IdString( "debug_pssm_splits" );
+    const IdString PbsProperty::PerceptualRoughness=IdString( "perceptual_roughness" );
     const IdString PbsProperty::HasPlanarReflections=IdString( "has_planar_reflections" );
 
     const IdString PbsProperty::NumTextures     = IdString( "num_textures" );
@@ -161,8 +162,7 @@ namespace Ogre
     const IdString PbsProperty::EmissiveConstant  = IdString( "emissive_constant" );
     const IdString PbsProperty::EmissiveAsLightmap= IdString( "emissive_as_lightmap" );
 
-    const IdString PbsProperty::Pcf3x3            = IdString( "pcf_3x3" );
-    const IdString PbsProperty::Pcf4x4            = IdString( "pcf_4x4" );
+    const IdString PbsProperty::Pcf               = IdString( "pcf" );
     const IdString PbsProperty::PcfIterations     = IdString( "pcf_iterations" );
     const IdString PbsProperty::ExponentialShadowMaps= IdString( "exponential_shadow_maps" );
 
@@ -297,6 +297,7 @@ namespace Ogre
 #endif
         mSetupWorldMatBuf( true ),
         mDebugPssmSplits( false ),
+        mPerceptualRoughness( true ),
         mAutoSpecIblMaxMipmap( true ),
         mVctFullConeCount( false ),
 #if OGRE_ENABLE_LIGHT_OBB_RESTRAINT
@@ -1254,13 +1255,23 @@ namespace Ogre
 
             if( mShadowFilter == PCF_3x3 )
             {
-                setProperty( PbsProperty::Pcf3x3, 1 );
+                setProperty( PbsProperty::Pcf, 3 );
                 setProperty( PbsProperty::PcfIterations, 4 );
             }
             else if( mShadowFilter == PCF_4x4 )
             {
-                setProperty( PbsProperty::Pcf4x4, 1 );
+                setProperty( PbsProperty::Pcf, 4 );
                 setProperty( PbsProperty::PcfIterations, 9 );
+            }
+            else if( mShadowFilter == PCF_5x5 )
+            {
+                setProperty( PbsProperty::Pcf, 5 );
+                setProperty( PbsProperty::PcfIterations, 16 );
+            }
+            else if( mShadowFilter == PCF_6x6 )
+            {
+                setProperty( PbsProperty::Pcf, 6 );
+                setProperty( PbsProperty::PcfIterations, 25 );
             }
             else if( mShadowFilter == ExponentialShadowMaps )
             {
@@ -1336,6 +1347,8 @@ namespace Ogre
 
         if( !casterPass )
         {
+            if( mPerceptualRoughness )
+                setProperty( PbsProperty::PerceptualRoughness, 1 );
             if( mLightProfilesTexture )
                 setProperty( PbsProperty::LightProfilesTexture, 1 );
             if( mLtcMatrixTexture )
@@ -1566,7 +1579,7 @@ namespace Ogre
             //float4 pccVctMinDistance_invPccVctInvDistance_rightEyePixelStartX_envMapNumMipmaps;
             mapSize += 4u * 4u;
 
-            //float4 aspectRatio_unused3;
+            //float4 aspectRatio_planarReflNumMips_unused2;
             mapSize += 4u * 4u;
 
             //float2 invWindowRes + float2 windowResolution
@@ -1947,9 +1960,21 @@ namespace Ogre
                 const float windowWidth = renderTarget->getWidth();
                 const float windowHeight = renderTarget->getHeight();
 
-                //float4 aspectRatio_unused3
+                //float4 aspectRatio_planarReflNumMips_unused2
                 *passBufferPtr++ = windowWidth / windowHeight;
+#ifdef OGRE_BUILD_COMPONENT_PLANAR_REFLECTIONS
+                if( mPlanarReflections )
+                {
+                    // Assume all planar refl. probes have the same num. of mipmaps
+                    *passBufferPtr++ = mPlanarReflections->getMaxNumMipmaps();
+                }
+                else
+                {
+                    *passBufferPtr++ = 0.0f;
+                }
+#else
                 *passBufferPtr++ = 0.0f;
+#endif
                 *passBufferPtr++ = 0.0f;
                 *passBufferPtr++ = 0.0f;
 
@@ -3452,10 +3477,14 @@ namespace Ogre
         outDataFolderPath = "Hlms/Pbs/" + shaderSyntax;
     }
     //-----------------------------------------------------------------------------------
-    void HlmsPbs::setDebugPssmSplits( bool bDebug )
+    void HlmsPbs::setDebugPssmSplits( bool bDebug ) { mDebugPssmSplits = bDebug; }
+    //-----------------------------------------------------------------------------------
+    void HlmsPbs::setPerceptualRoughness( bool bPerceptualRoughness )
     {
-        mDebugPssmSplits = bDebug;
+        mPerceptualRoughness = bPerceptualRoughness;
     }
+    //-----------------------------------------------------------------------------------
+    bool HlmsPbs::getPerceptualRoughness( void ) const { return mPerceptualRoughness; }
     //-----------------------------------------------------------------------------------
     void HlmsPbs::setShadowSettings( ShadowFilter filter )
     {

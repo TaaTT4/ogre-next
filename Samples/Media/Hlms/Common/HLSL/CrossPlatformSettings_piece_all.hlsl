@@ -1,6 +1,7 @@
 @piece( SetCrossPlatformSettings )
 #define ushort uint
 #define ushort3 uint3
+#define ushort4 uint4
 #define ogre_float4x3 float4x3
 
 //Short used for read operations. It's an int in GLSL & HLSL. An ushort in Metal
@@ -48,7 +49,7 @@
 
 #define outVs_Position outVs.gl_Position
 #define outVs_viewportIndex outVs.gl_ViewportIndex
-#define outVs_clipDistance0 outVs.gl_ClipDistance0
+#define outVs_clipDistance0 outVs.gl_ClipDistance[0]
 
 #define gl_SampleMaskIn0 gl_SampleMask
 #define interpolateAtSample( interp, subsample ) EvaluateAttributeAtSample( interp, subsample )
@@ -67,6 +68,7 @@
 #define OGRE_ddx( val ) ddx( val )
 #define OGRE_ddy( val ) ddy( val )
 #define OGRE_Load2D( tex, iuv, lod ) tex.Load( int3( iuv, lod ) )
+#define OGRE_LoadArray2D( tex, iuv, arrayIdx, lod ) tex.Load( int4( iuv, arrayIdx, lod ) )
 #define OGRE_Load2DMS( tex, iuv, subsample ) tex.Load( iuv, subsample )
 
 #define OGRE_Load3D( tex, iuv, lod ) tex.Load( int4( iuv, lod ) )
