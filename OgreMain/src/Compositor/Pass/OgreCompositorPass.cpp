@@ -118,6 +118,38 @@ namespace Ogre
         populateTextureDependenciesFromExposedTextures();
     }
     //-----------------------------------------------------------------------------------
+    void CompositorPass::setViewportSizeToViewport( size_t vpIdx, Viewport *outVp )
+    {
+        if( mDefinition->mNumViewports == 0u )
+            return;
+
+        CompositorWorkspace *workspace = mParentNode->getWorkspace();
+        uint8 workspaceVpMask = workspace->getViewportModifierMask();
+
+        bool applyModifier = ( workspaceVpMask & mDefinition->mViewportModifierMask ) != 0;
+        Vector4 vpModifier = applyModifier ? workspace->getViewportModifier() : Vector4( 0, 0, 1, 1 );
+
+        vpIdx = std::min<size_t>( vpIdx, mDefinition->mNumViewports - 1u );
+
+        Vector4 vpSize;
+        Vector4 scissors;
+
+        const Real left = mDefinition->mVpRect[vpIdx].mVpLeft + vpModifier.x;
+        const Real top = mDefinition->mVpRect[vpIdx].mVpTop + vpModifier.y;
+        const Real width = mDefinition->mVpRect[vpIdx].mVpWidth * vpModifier.z;
+        const Real height = mDefinition->mVpRect[vpIdx].mVpHeight * vpModifier.w;
+
+        const Real scLeft = mDefinition->mVpRect[vpIdx].mVpScissorLeft + vpModifier.x;
+        const Real scTop = mDefinition->mVpRect[vpIdx].mVpScissorTop + vpModifier.y;
+        const Real scWidth = mDefinition->mVpRect[vpIdx].mVpScissorWidth * vpModifier.z;
+        const Real scHeight = mDefinition->mVpRect[vpIdx].mVpScissorHeight * vpModifier.w;
+
+        vpSize = Vector4( left, top, width, height );
+        scissors = Vector4( scLeft, scTop, scWidth, scHeight );
+
+        outVp->setDimensions( mAnyTargetTexture, vpSize, scissors, mAnyMipLevel );
+    }
+    //-----------------------------------------------------------------------------------
     void CompositorPass::setRenderPassDescToCurrent(void)
     {
         CompositorWorkspace *workspace = mParentNode->getWorkspace();
@@ -390,9 +422,14 @@ namespace Ogre
         }
         else
         {
-            //This is colour target asking to override the RTV.
-            renderPassTargetAttachment->slice       = mDefinition->getRtIndex();
-            renderPassTargetAttachment->resolveSlice= mDefinition->getRtIndex();
+            // This is colour target asking to override the RTV.
+            // It's common when doing MSAA that only the resolveSlice can be > 0 so we check for that
+            if( renderPassTargetAttachment->texture &&
+                mDefinition->getRtIndex() < renderPassTargetAttachment->texture->getNumSlices() )
+            {
+                renderPassTargetAttachment->slice = (uint16)mDefinition->getRtIndex();
+            }
+            renderPassTargetAttachment->resolveSlice= (uint16)mDefinition->getRtIndex();
         }
 
         if( renderPassTargetAttachment->storeAction == StoreAction::StoreOrResolve )

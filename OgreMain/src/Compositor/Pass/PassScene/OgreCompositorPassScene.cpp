@@ -181,6 +181,8 @@ namespace Ogre
 
         notifyPassEarlyPreExecuteListeners();
 
+        SceneManager *sceneManager = mCamera->getSceneManager();
+
         Camera const *usedLodCamera = mLodCamera;
         if( lodCamera && mDefinition->mLodCameraName == IdString() )
             usedLodCamera = lodCamera;
@@ -191,8 +193,6 @@ namespace Ogre
         mViewport->setMaterialScheme(mDefinition->mMaterialScheme);
 #endif
 
-        SceneManager *sceneManager = mCamera->getSceneManager();
-
         const Quaternion oldCameraOrientation( mCamera->getOrientation() );
 
         //We have to do this first in case usedLodCamera == mCamera
@@ -202,10 +202,25 @@ namespace Ogre
             mCamera->setOrientation( oldCameraOrientation * CubemapRotations[sliceIdx] );
         }
 
+        Viewport *viewport = sceneManager->getCurrentViewport0();
+        viewport->_setVisibilityMask( mDefinition->mVisibilityMask, mDefinition->mLightVisibilityMask );
+
         if( mDefinition->mUpdateLodLists )
         {
-            sceneManager->updateAllLods( usedLodCamera, mDefinition->mLodBias,
+            // LODs may require up to date viewports. But we can't write to the viewport's dimensions
+            // without messing up beginRenderPassDescriptor internal state, so we use a local copy.
+            //
+            // Our LOD camera must have set a valid viewport. If usedLodCamera != mLodCamera due to
+            // our input argument, then it's caller's responsibility to have set a valid viewport
+            Viewport localVp = *viewport;
+            setViewportSizeToViewport( 0u, &localVp );
+            mLodCamera->_notifyViewport( &localVp );
+
+            sceneManager->updateAllLods( usedLodCamera, mDefinition->mLodBias,  //
                                          mDefinition->mFirstRQ, mDefinition->mLastRQ );
+
+            // Restore viewport
+            mLodCamera->_notifyViewport( viewport );
         }
 
         //Passes belonging to a ShadowNode should not override their parent.
@@ -215,9 +230,6 @@ namespace Ogre
             sceneManager->_setCurrentShadowNode( shadowNode, mDefinition->mShadowNodeRecalculation ==
                                                                                     SHADOW_NODE_REUSE );
         }
-
-        Viewport *viewport = sceneManager->getCurrentViewport0();
-        viewport->_setVisibilityMask( mDefinition->mVisibilityMask, mDefinition->mLightVisibilityMask );
 
         //Fire the listener in case it wants to change anything
         notifyPassPreExecuteListeners();
