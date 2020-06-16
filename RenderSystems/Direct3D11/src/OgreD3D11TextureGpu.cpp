@@ -57,6 +57,35 @@ namespace Ogre
         destroyInternalResourcesImpl();
     }
     //-----------------------------------------------------------------------------------
+    void D3D11TextureGpu::notifyDeviceLost(D3D11Device* device)
+    {
+        mPendingResidencyChanges = 0; // we already cleared D3D11TextureGpuManager::mScheduledTasks
+        mTexturePool = 0;             // texture pool is already destroyed
+        mInternalSliceStart = 0;
+        if(getResidencyStatus() == GpuResidency::Resident)
+        {
+            _transitionTo(GpuResidency::OnStorage, (uint8*)0);
+            mNextResidencyStatus = GpuResidency::Resident;
+        }
+
+        mDisplayTextureName = 0;
+        mDefaultDisplaySrv.Reset();
+    }
+    //---------------------------------------------------------------------
+    void D3D11TextureGpu::notifyDeviceRestored(D3D11Device* device, unsigned pass)
+    {
+        if( pass == 0 )
+        {
+            _setToDisplayDummyTexture();
+
+            if( !isRenderWindowSpecific() && getNextResidencyStatus() == GpuResidency::Resident)
+            {
+                mNextResidencyStatus = mResidencyStatus;
+                scheduleTransitionTo(GpuResidency::Resident);
+            }
+        }
+    }
+    //-----------------------------------------------------------------------------------
     void D3D11TextureGpu::create1DTexture(void)
     {
         D3D11_TEXTURE1D_DESC desc;

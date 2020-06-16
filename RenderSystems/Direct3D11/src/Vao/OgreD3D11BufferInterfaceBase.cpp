@@ -43,6 +43,16 @@ namespace Ogre
     {
     }
     //-----------------------------------------------------------------------------------
+    void D3D11BufferInterfaceBase::notifyDeviceLost( D3D11Device *device )
+    {
+        mVboPoolIdx = 0xFFFFFFFF;
+        mVboName.Reset();
+    }
+    //-----------------------------------------------------------------------------------
+    void D3D11BufferInterfaceBase::notifyDeviceRestored( D3D11Device *device, unsigned pass )
+    {
+    }
+    //-----------------------------------------------------------------------------------
     void D3D11BufferInterfaceBase::splicedCopy( size_t dstOffsetBytes, size_t srcOffsetBytes,
                                                 size_t sizeBytes, size_t alignment,
                                                 ID3D11Buffer *dstBuffer, ID3D11Buffer *srcBuffer,

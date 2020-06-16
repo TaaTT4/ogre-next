@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include "OgreViewport.h"
 #include "OgreLogManager.h"
 #include "OgreMeshManager.h"
+#include "OgreMeshManager2.h"
 #include "OgreSceneManagerEnumerator.h"
 #include "OgreD3D11HardwareBufferManager.h"
 #include "OgreD3D11HardwareIndexBuffer.h"
@@ -1666,6 +1667,11 @@ namespace Ogre
         while(scnIt.hasMoreElements())
             scnIt.getNext()->_releaseManualHardwareResources();
 
+        Root::getSingleton().getHlmsManager()->_changeRenderSystem((RenderSystem*)0);
+
+        static_cast<D3D11TextureGpuManager*>(mTextureGpuManager)->_destroyD3DResources();
+        static_cast<D3D11VaoManager*>(mVaoManager)->_destroyD3DResources();
+
         notifyDeviceLost(&mDevice);
 
         // Release all automatic temporary buffers and free unused
@@ -1676,10 +1682,16 @@ namespace Ogre
         // recreate device
         createDevice( mLastWindowTitlePassedToExtensions );
 
+        static_cast<D3D11VaoManager*>(mVaoManager)->_createD3DResources();
+        static_cast<D3D11TextureGpuManager*>(mTextureGpuManager)->_createD3DResources();
+
         // recreate device depended resources
         notifyDeviceRestored(&mDevice);
 
+        Root::getSingleton().getHlmsManager()->_changeRenderSystem(this);
+
         v1::MeshManager::getSingleton().reloadAll(Resource::LF_PRESERVE_STATE);
+        MeshManager::getSingleton().reloadAll(Resource::LF_PRESERVE_STATE);
 
         scnIt = SceneManagerEnumerator::getSingleton().getSceneManagerIterator();
         while(scnIt.hasMoreElements())
@@ -1708,6 +1720,9 @@ namespace Ogre
             LUID newLUID = newDriver->getAdapterIdentifier().AdapterLuid;
             LUID prevLUID = mActiveD3DDriver.getAdapterIdentifier().AdapterLuid;
             anotherIsElected = (newLUID.LowPart != prevLUID.LowPart) || (newLUID.HighPart != prevLUID.HighPart);
+#if OGRE_DEBUG_MODE >= OGRE_DEBUG_HIGH
+            anotherIsElected = true; // simulate switching device
+#endif
         }
 
         if(anotherIsElected || mDevice.IsDeviceLost())

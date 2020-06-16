@@ -70,7 +70,6 @@
 #define NO_INTERPOLATION_PREFIX flat
 #define NO_INTERPOLATION_SUFFIX
 
-#define finalDrawId drawId
 #define PARAMS_ARG_DECL
 #define PARAMS_ARG
 
@@ -79,6 +78,7 @@
 #define inVs_blendWeights blendWeights
 #define inVs_blendIndices blendIndices
 #define inVs_qtangent qtangent
+#define inVs_colour colour
 
 @property( !hlms_instanced_stereo )
 	#define inVs_drawId drawId
@@ -86,6 +86,8 @@
 	#define inVs_drawId (drawId >> 1u)
 	#define inVs_stereoDrawId drawId
 @end
+
+#define finalDrawId inVs_drawId
 
 @foreach( hlms_uv_count, n )
 	#define inVs_uv@n uv@n@end

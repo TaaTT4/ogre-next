@@ -40,8 +40,6 @@ inline float3x3 toMat3x3( float3x4 m )
 #define NO_INTERPOLATION_PREFIX
 #define NO_INTERPOLATION_SUFFIX [[flat]]
 
-#define finalDrawId drawId
-
 #define floatBitsToUint(x) as_type<uint>(x)
 #define uintBitsToFloat(x) as_type<float>(x)
 #define floatBitsToInt(x) as_type<int>(x)
@@ -52,6 +50,7 @@ inline float3x3 toMat3x3( float3x4 m )
 #define inVs_blendWeights input.blendWeights
 #define inVs_blendIndices input.blendIndices
 #define inVs_qtangent input.qtangent
+#define inVs_colour input.colour
 @property( iOS )
 	@property( !hlms_instanced_stereo )
 		#define inVs_drawId (baseInstance + instanceId)
@@ -69,6 +68,8 @@ inline float3x3 toMat3x3( float3x4 m )
 @end
 @foreach( hlms_uv_count, n )
     #define inVs_uv@n input.uv@n@end
+
+#define finalDrawId inVs_drawId
 
 #define outVs_Position outVs.gl_Position
 #define outVs_viewportIndex outVs.gl_ViewportIndex

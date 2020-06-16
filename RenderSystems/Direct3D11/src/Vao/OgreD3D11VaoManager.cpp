@@ -131,20 +131,7 @@ namespace Ogre
         mSupportsPersistentMapping  = false;
         mSupportsIndirectBuffers    = _supportsIndirectBuffers;
 
-        //4096u is a sensible default because most Hlms implementations need 16 bytes per
-        //instance in a const buffer. HlmsBufferManager::mapNextConstBuffer purposedly clamps
-        //its const buffers to 64kb, so that 64kb / 16 = 4096 and thus it can never exceed
-        //4096 instances.
-        //However due to instanced stereo, we need twice that
-        const uint32 maxNumInstances = 4096u * 2u;
-        VertexElement2Vec vertexElements;
-        vertexElements.push_back( VertexElement2( VET_UINT1, VES_COUNT ) );
-        uint32 *drawIdPtr = static_cast<uint32*>( OGRE_MALLOC_SIMD( maxNumInstances * sizeof(uint32),
-                                                                    MEMCATEGORY_GEOMETRY ) );
-        for( uint32 i=0; i<maxNumInstances; ++i )
-            drawIdPtr[i] = i;
-        mDrawId = createVertexBuffer( vertexElements, maxNumInstances, BT_IMMUTABLE, drawIdPtr, true );
-        createDelayedImmutableBuffers(); //Ensure mDrawId gets allocated before we continue
+        _createD3DResources();
     }
     //-----------------------------------------------------------------------------------
     D3D11VaoManager::~D3D11VaoManager()
@@ -161,6 +148,81 @@ namespace Ogre
         deleteAllBuffers();
 
         mSplicingHelperBuffer.Reset();
+
+        for( size_t i=0; i<NumInternalBufferTypes; ++i )
+        {
+            for( size_t j=0; j<BT_DYNAMIC_DEFAULT+1; ++j )
+            {
+                //Free pointers and collect the buffer names from all VBOs to use one API call
+                VboVec::iterator itor = mVbos[i][j].begin();
+                VboVec::iterator end  = mVbos[i][j].end();
+
+                while( itor != end )
+                {
+                    itor->vboName.Reset();
+                    delete itor->dynamicBuffer;
+                    itor->dynamicBuffer = 0;
+                    ++itor;
+                }
+            }
+        }
+    }
+    //-----------------------------------------------------------------------------------
+    void D3D11VaoManager::_createD3DResources()
+    {
+        //4096u is a sensible default because most Hlms implementations need 16 bytes per
+        //instance in a const buffer. HlmsBufferManager::mapNextConstBuffer purposedly clamps
+        //its const buffers to 64kb, so that 64kb / 16 = 4096 and thus it can never exceed
+        //4096 instances.
+        //However due to instanced stereo, we need twice that
+        const uint32 maxNumInstances = 4096u * 2u;
+        VertexElement2Vec vertexElements;
+        vertexElements.push_back( VertexElement2( VET_UINT1, VES_COUNT ) );
+        uint32 *drawIdPtr = static_cast<uint32*>( OGRE_MALLOC_SIMD( maxNumInstances * sizeof(uint32),
+                                                                    MEMCATEGORY_GEOMETRY ) );
+        for( uint32 i=0; i<maxNumInstances; ++i )
+            drawIdPtr[i] = i;
+        mDrawId = createVertexBuffer( vertexElements, maxNumInstances, BT_IMMUTABLE, drawIdPtr, true );
+        createDelayedImmutableBuffers(); //Ensure mDrawId gets allocated before we continue
+    }
+    //-----------------------------------------------------------------------------------
+    void D3D11VaoManager::_destroyD3DResources()
+    {
+        destroyVertexBuffer(mDrawId);
+        mDrawId = 0;
+
+        for( D3D11SyncVec::iterator it = mFrameSyncVec.begin(), it_end = mFrameSyncVec.end(); it != it_end; ++it )
+            it->Reset();
+
+        _destroyAllDelayedBuffers();
+
+        for( size_t i = 0; i < 2; ++i )
+        {
+            for(StagingBufferVec::iterator it = mZeroRefStagingBuffers[i].begin(), it_end = mZeroRefStagingBuffers[i].end(); it != it_end; ++it)
+                SAFE_DELETE(*it);
+
+            mZeroRefStagingBuffers[i].clear();
+        }
+
+        for( VaoVec::iterator it = mVaos.begin(), it_end = mVaos.end(); it != it_end; ++it )
+        {
+            for (Vao::VertexBindingVec::iterator it2 = it->vertexBuffers.begin(), it2_end = it->vertexBuffers.end(); it2 != it2_end; ++it2)
+                it2->vertexBufferVbo.Reset();
+            it->indexBufferVbo.Reset();
+
+            for( size_t i = 0; i < 16; ++i )
+                it->sharedData->mVertexBuffers[i].Reset();
+            it->sharedData->mIndexBuffer.Reset();
+        }
+
+        for( size_t i=0; i<NumInternalBufferTypes; ++i )
+        {
+            for( size_t j=0; j<BT_DYNAMIC_DEFAULT+1; ++j )
+            {
+                for( VboVec::iterator it = mVbos[i][j].begin(), it_end = mVbos[i][j].end(); it != it_end; ++it )
+                    it->vboName.Reset();
+            }
+        }
 
         for( size_t i=0; i<NumInternalBufferTypes; ++i )
         {
@@ -475,6 +537,9 @@ namespace Ogre
     void D3D11VaoManager::deallocateVbo( size_t vboIdx, size_t bufferOffset, size_t sizeBytes,
                                          BufferType bufferType, InternalBufferType internalType )
     {
+        if( vboIdx == 0xFFFFFFFF )
+            return;
+
         if (bufferType >= BT_DYNAMIC_DEFAULT)
         {
             bufferType = BT_DYNAMIC_DEFAULT; //Persitent mapping not supported in D3D11.
