@@ -995,6 +995,7 @@ namespace Ogre
 
                     //Used by IBL_SPECULAR
                     ID_SAMPLES_PER_ITERATION,
+                    ID_SAMPLES_SINGLE_ITERATION_FALLBACK,
                     ID_FORCE_MIPMAP_FALLBACK,
 
             ID_READ_BACK_AS_TEXTURE,
@@ -1002,6 +1003,8 @@ namespace Ogre
         ID_SHADOW_NODE,
             ID_NUM_SPLITS,
             ID_NUM_STABLE_SPLITS,
+            ID_NORMAL_OFFSET_BIAS,
+            ID_CONSTANT_BIAS_SCALE,
             ID_PSSM_SPLIT_PADDING,
             ID_PSSM_SPLIT_BLEND,
             ID_PSSM_SPLIT_FADE,

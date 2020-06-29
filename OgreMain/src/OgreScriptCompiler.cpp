@@ -1372,11 +1372,14 @@ namespace Ogre
         mIds["gauss_deviation"] = ID_GAUSS_DEVIATION;
 
         mIds["samples_per_iteration"] = ID_SAMPLES_PER_ITERATION;
+        mIds["samples_single_iteration_fallback"] = ID_SAMPLES_SINGLE_ITERATION_FALLBACK;
         mIds["force_mipmap_fallback"] = ID_FORCE_MIPMAP_FALLBACK;
 
         mIds["compositor_node_shadow"]  = ID_SHADOW_NODE;
         mIds["num_splits"]              = ID_NUM_SPLITS;
         mIds["num_stable_splits"]       = ID_NUM_STABLE_SPLITS;
+        mIds["normal_offset_bias"]      = ID_NORMAL_OFFSET_BIAS;
+        mIds["constant_bias_scale"]     = ID_CONSTANT_BIAS_SCALE;
         mIds["pssm_split_padding"]      = ID_PSSM_SPLIT_PADDING;
         mIds["pssm_split_blend"]        = ID_PSSM_SPLIT_BLEND;
         mIds["pssm_split_fade"]         = ID_PSSM_SPLIT_FADE;

@@ -1203,6 +1203,8 @@ namespace Ogre
             rsc->setCapability(RSC_UAV);
         }
 
+        rsc->setCapability(RSC_DEPTH_CLAMP);
+
         rsc->setCapability(RSC_HWRENDER_TO_TEXTURE);
         rsc->setCapability(RSC_TEXTURE_FLOAT);
 
@@ -1582,7 +1584,7 @@ namespace Ogre
     }
     //-----------------------------------------------------------------------------------
     TextureGpu* D3D11RenderSystem::createDepthBufferFor( TextureGpu *colourTexture, bool preferDepthTexture,
-                                                         PixelFormatGpu depthBufferFormat )
+                                                         PixelFormatGpu depthBufferFormat, uint16 poolId )
     {
         if( depthBufferFormat == PFG_UNKNOWN )
         {
@@ -1593,7 +1595,7 @@ namespace Ogre
         }
 
         return RenderSystem::createDepthBufferFor( colourTexture, preferDepthTexture,
-                                                   depthBufferFormat );
+                                                   depthBufferFormat, poolId );
     }
     //---------------------------------------------------------------------
     void D3D11RenderSystem::_notifyWindowDestroyed( Window *window )
@@ -2301,7 +2303,7 @@ namespace Ogre
         rasterDesc.SlopeScaledDepthBias = newBlock->mDepthBiasSlopeScale * biasSign;
         rasterDesc.DepthBiasClamp   = 0;
 
-        rasterDesc.DepthClipEnable  = true;
+        rasterDesc.DepthClipEnable  = !newBlock->mDepthClamp;
         rasterDesc.ScissorEnable    = newBlock->mScissorTestEnabled;
 
         rasterDesc.MultisampleEnable     = true;

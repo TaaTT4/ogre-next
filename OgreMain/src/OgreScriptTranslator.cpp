@@ -7514,7 +7514,51 @@ namespace Ogre{
                         }
                     }
                     break;
-                case ID_PSSM_SPLIT_PADDING:
+                    case ID_NORMAL_OFFSET_BIAS:
+                    {
+                        if( prop->values.empty() )
+                        {
+                            compiler->addError( ScriptCompiler::CE_NUMBEREXPECTED, prop->file,
+                                                prop->line );
+                        }
+                        else if( prop->values.size() != 1 )
+                        {
+                            compiler->addError( ScriptCompiler::CE_FEWERPARAMETERSEXPECTED, prop->file,
+                                                prop->line );
+                        }
+
+                        AbstractNodeList::const_iterator it0 = prop->values.begin();
+                        if( !getReal( *it0, &defaultParams.normalOffsetBias ) )
+                        {
+                            compiler->addError( ScriptCompiler::CE_NUMBEREXPECTED, prop->file,
+                                                prop->line );
+                            return;
+                        }
+                    }
+                    break;
+                    case ID_CONSTANT_BIAS_SCALE:
+                    {
+                        if( prop->values.empty() )
+                        {
+                            compiler->addError( ScriptCompiler::CE_NUMBEREXPECTED, prop->file,
+                                                prop->line );
+                        }
+                        else if( prop->values.size() != 1 )
+                        {
+                            compiler->addError( ScriptCompiler::CE_FEWERPARAMETERSEXPECTED, prop->file,
+                                                prop->line );
+                        }
+
+                        AbstractNodeList::const_iterator it0 = prop->values.begin();
+                        if( !getReal( *it0, &defaultParams.constantBiasScale ) )
+                        {
+                            compiler->addError( ScriptCompiler::CE_NUMBEREXPECTED, prop->file,
+                                                prop->line );
+                            return;
+                        }
+                    }
+                    break;
+                    case ID_PSSM_SPLIT_PADDING:
                     {
                         if(prop->values.empty())
                         {
@@ -10635,6 +10679,22 @@ namespace Ogre{
                     {
                         AbstractNodeList::const_iterator it0 = prop->values.begin();
                         if( !getFloat( *it0, &passIbl->mSamplesPerIteration ) )
+                        {
+                            compiler->addError( ScriptCompiler::CE_NUMBEREXPECTED, prop->file,
+                                                prop->line, "Boolean expected" );
+                        }
+                    }
+                    break;
+                case ID_SAMPLES_SINGLE_ITERATION_FALLBACK:
+                    if( prop->values.size() != 1u )
+                    {
+                        compiler->addError( ScriptCompiler::CE_NUMBEREXPECTED, prop->file, prop->line );
+                        return;
+                    }
+                    else
+                    {
+                        AbstractNodeList::const_iterator it0 = prop->values.begin();
+                        if( !getFloat( *it0, &passIbl->mSamplesSingleIterationFallback ) )
                         {
                             compiler->addError( ScriptCompiler::CE_NUMBEREXPECTED, prop->file,
                                                 prop->line, "Boolean expected" );

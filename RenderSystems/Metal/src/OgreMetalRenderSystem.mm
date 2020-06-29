@@ -378,9 +378,12 @@ namespace Ogre
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE_IOS
         if( [mActiveDevice->mDevice supportsFeatureSet:MTLFeatureSet_iOS_GPUFamily3_v2] )
             rsc->setCapability(RSC_STORE_AND_MULTISAMPLE_RESOLVE);
+        if( [mActiveDevice->mDevice supportsFeatureSet:MTLFeatureSet_iOS_GPUFamily4_v1] )
+            rsc->setCapability(RSC_DEPTH_CLAMP);
 #else
         if( [mActiveDevice->mDevice supportsFeatureSet:MTLFeatureSet_OSX_GPUFamily1_v2] )
             rsc->setCapability(RSC_STORE_AND_MULTISAMPLE_RESOLVE);
+        rsc->setCapability(RSC_DEPTH_CLAMP);
 #endif
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE_IOS
@@ -392,13 +395,16 @@ namespace Ogre
 #if OGRE_PLATFORM != OGRE_PLATFORM_APPLE_IOS
         rsc->setCapability(RSC_TEXTURE_CUBE_MAP_ARRAY);
 #endif
-        rsc->setCapability( RSC_TYPED_UAV_LOADS );
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE_IOS
         if( [mActiveDevice->mDevice supportsFeatureSet:MTLFeatureSet_iOS_GPUFamily5_v1] )
             rsc->setCapability(RSC_VP_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER);
+
+        if( [mActiveDevice->mDevice supportsFeatureSet:MTLFeatureSet_iOS_GPUFamily4_v1] )
+            rsc->setCapability( RSC_TYPED_UAV_LOADS );
 #else
         rsc->setCapability(RSC_VP_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER);
+        rsc->setCapability( RSC_TYPED_UAV_LOADS );
 #endif
 
         //rsc->setCapability(RSC_ATOMIC_COUNTERS);
@@ -1169,15 +1175,16 @@ namespace Ogre
         endRenderPassDescriptor( false );
     }
     //-----------------------------------------------------------------------------------
-    TextureGpu* MetalRenderSystem::createDepthBufferFor( TextureGpu *colourTexture,
+    TextureGpu *MetalRenderSystem::createDepthBufferFor( TextureGpu *colourTexture,
                                                          bool preferDepthTexture,
-                                                         PixelFormatGpu depthBufferFormat )
+                                                         PixelFormatGpu depthBufferFormat,
+                                                         uint16 poolId )
     {
         if( depthBufferFormat == PFG_UNKNOWN )
             depthBufferFormat = DepthBuffer::DefaultDepthBufferFormat;
 
         return RenderSystem::createDepthBufferFor( colourTexture, preferDepthTexture,
-                                                   depthBufferFormat );
+                                                   depthBufferFormat, poolId );
     }
     //-------------------------------------------------------------------------
     void MetalRenderSystem::_setTextureCoordCalculation( size_t unit, TexCoordCalcMethod m,
@@ -2041,6 +2048,11 @@ namespace Ogre
                                      slopeScale:pso->macroblock->mDepthBiasSlopeScale * biasSign
                                      clamp:0.0f];
         [mActiveRenderEncoder setCullMode:metalPso->cullMode];
+        if( @available( iOS 11.0, * ) )
+        {
+            [mActiveRenderEncoder setDepthClipMode:pso->macroblock->mDepthClamp ? MTLDepthClipModeClamp
+                                                                                : MTLDepthClipModeClip];
+        }
 
         if( mPso != metalPso )
         {
