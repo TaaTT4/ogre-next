@@ -440,7 +440,7 @@ namespace Ogre
 
             /// Only used for textures that need more than one Image to load
             ///
-            /// Used by worker thread. No protection needed.
+            /// Used by worker thread. No protection needed (except in abortAllRequests).
             ///
             /// @see    TextureGpuManager::PartialImage
             PartialImageMap     partialImages;
@@ -556,6 +556,7 @@ namespace Ogre
         uint8 mErrorFallbackTexData[2u*2u*6u*4u];
 
         void destroyAll(void);
+        void abortAllRequests(void);
         void destroyAllStagingBuffers(void);
         void destroyAllTextures(void);
         void destroyAllPools(void);
@@ -640,6 +641,8 @@ namespace Ogre
     public:
         TextureGpuManager( VaoManager *vaoManager, RenderSystem *renderSystem );
         virtual ~TextureGpuManager();
+
+        void shutdown();
 
         /** Whether to use HW or SW mipmap generation when specifying
             TextureFilter::TypeGenerateDefaultMipmaps for loading files from textures.

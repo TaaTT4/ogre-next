@@ -162,11 +162,7 @@ namespace Ogre
     //-----------------------------------------------------------------------------------
     TextureGpuManager::~TextureGpuManager()
     {
-        mShuttingDown = true;
-#if OGRE_PLATFORM != OGRE_PLATFORM_EMSCRIPTEN && !OGRE_FORCE_TEXTURE_STREAMING_ON_MAIN_THREAD
-        mWorkerWaitableEvent.wake();
-        Threads::WaitForThreads( 1u, &mWorkerThread );
-#endif
+        shutdown();
 
         assert( mAvailableStagingTextures.empty() && "Derived class didn't call destroyAll!" );
         assert( mUsedStagingTextures.empty() && "Derived class didn't call destroyAll!" );
@@ -182,16 +178,64 @@ namespace Ogre
         mTextureGpuManagerListener = 0;
     }
     //-----------------------------------------------------------------------------------
+    void TextureGpuManager::shutdown(void)
+    {
+        if( !mShuttingDown )
+        {
+            mShuttingDown = true;
+#if OGRE_PLATFORM != OGRE_PLATFORM_EMSCRIPTEN && !OGRE_FORCE_TEXTURE_STREAMING_ON_MAIN_THREAD
+            mWorkerWaitableEvent.wake();
+            Threads::WaitForThreads( 1u, &mWorkerThread );
+#endif
+        }
+    }
+    //-----------------------------------------------------------------------------------
     void TextureGpuManager::destroyAll(void)
     {
-        waitForStreamingCompletion();
-
         mMutex.lock();
+        abortAllRequests();
         destroyAllStagingBuffers();
         destroyAllAsyncTextureTicket();
         destroyAllTextures();
         destroyAllPools();
         mMutex.unlock();
+    }
+    //-----------------------------------------------------------------------------------
+    void TextureGpuManager::abortAllRequests( void )
+    {
+        ThreadData &workerData = mThreadData[c_workerThread];
+        ThreadData &mainData = mThreadData[c_mainThread];
+        mLoadRequestsMutex.lock();
+        mainData.loadRequests.clear();  // TODO: if( loadRequest.autoDeleteImage ) delete loadRequest.image;
+        mainData.objCmdBuffer->clear();
+        mainData.usedStagingTex.clear();
+        workerData.loadRequests.clear();  // TODO: if( loadRequest.autoDeleteImage ) delete loadRequest.image;
+        workerData.objCmdBuffer->clear();
+        workerData.usedStagingTex.clear();
+        mLoadRequestsMutex.unlock();
+
+        while( !mStreamingData.queuedImages.empty() )
+        {
+            TextureFilter::FilterBase::destroyFilters( mStreamingData.queuedImages.back().filters );
+            mStreamingData.queuedImages.pop_back();
+        }
+
+        {
+            // These partial images were supposed to transfer ownership of sysRamPtr to TextureGpu
+            // But we now must free these ptrs ourselves
+            PartialImageMap::const_iterator itor = mStreamingData.partialImages.begin();
+            PartialImageMap::const_iterator endt = mStreamingData.partialImages.end();
+
+            while( itor != endt )
+            {
+                if( itor->second.sysRamPtr )
+                    OGRE_FREE_SIMD( itor->second.sysRamPtr, MEMCATEGORY_RESOURCE );
+                ++itor;
+            }
+            mStreamingData.partialImages.clear();
+        }
+
+        mScheduledTasks.clear();
     }
     //-----------------------------------------------------------------------------------
     void TextureGpuManager::destroyAllStagingBuffers(void)
