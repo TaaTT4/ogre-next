@@ -30,6 +30,7 @@ THE SOFTWARE.
 
 #include "OgreHlmsCompute.h"
 #include "OgreHlmsComputeJob.h"
+#include "OgreHlmsManager.h"
 
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreHighLevelGpuProgram.h"
@@ -90,6 +91,7 @@ namespace Ogre
     HlmsCompute::~HlmsCompute()
     {
         destroyAllComputeJobs();
+        mHlmsManager->unregisterComputeHlms();
     }
     //-----------------------------------------------------------------------------------
     void HlmsCompute::_changeRenderSystem( RenderSystem *newRs )
@@ -358,6 +360,24 @@ namespace Ogre
 
         if( itor != mComputeJobs.end() )
         {
+            HlmsComputeJob *job = itor->second.computeJob;
+            ComputePsoCacheVec::iterator itCache = mComputeShaderCache.begin();
+            ComputePsoCacheVec::iterator enCache = mComputeShaderCache.end();
+
+            while( itCache != enCache )
+            {
+                if( itCache->job == job )
+                {
+                    mRenderSystem->_hlmsComputePipelineStateObjectDestroyed( &itCache->pso );
+                    // We can't remove the entry, but we can at least cleanup
+                    // some memory and leave an empty, unused entry
+                    *itCache = ComputePsoCache();
+                    mFreeShaderCacheEntries.push_back(
+                        static_cast<size_t>( itCache - mComputeShaderCache.begin() ) );
+                }
+                ++itCache;
+            }
+
             OGRE_DELETE itor->second.computeJob;
             mComputeJobs.erase( itor );
         }
@@ -365,6 +385,8 @@ namespace Ogre
     //-----------------------------------------------------------------------------------
     void HlmsCompute::destroyAllComputeJobs()
     {
+        clearShaderCache();
+
         HlmsComputeJobMap::const_iterator itor = mComputeJobs.begin();
         HlmsComputeJobMap::const_iterator end  = mComputeJobs.end();
 
@@ -384,14 +406,18 @@ namespace Ogre
 
         while( itor != end )
         {
-            mRenderSystem->_hlmsComputePipelineStateObjectDestroyed( &itor->pso );
-            itor->job->mPsoCacheHash = -1;
+            if( itor->job )
+            {
+                mRenderSystem->_hlmsComputePipelineStateObjectDestroyed( &itor->pso );
+                itor->job->mPsoCacheHash = -1;
+            }
             ++itor;
         }
 
         Hlms::clearShaderCache();
         mCompiledShaderCache.clear();
         mComputeShaderCache.clear();
+        mFreeShaderCacheEntries.clear();
     }
     //-----------------------------------------------------------------------------------
     void HlmsCompute::dispatch( HlmsComputeJob *job, SceneManager *sceneManager, Camera *camera )
@@ -419,8 +445,17 @@ namespace Ogre
                 psoCache.setProperties.swap( job->mSetProperties );
                 this->mSetProperties = job->mSetProperties;
 
+                size_t newCacheEntryIdx = mComputeShaderCache.size();
+                if( mFreeShaderCacheEntries.empty() )
+                    mComputeShaderCache.push_back( ComputePsoCache() );
+                else
+                {
+                    newCacheEntryIdx = mFreeShaderCacheEntries.back();
+                    mFreeShaderCacheEntries.pop_back();
+                }
+
                 //Compile and add the PSO to the cache.
-                psoCache.pso = compileShader( job, mComputeShaderCache.size() );
+                psoCache.pso = compileShader( job, (uint32)newCacheEntryIdx );
 
                 ShaderParams *shaderParams = job->_getShaderParams( "default" );
                 if( shaderParams )
@@ -428,21 +463,21 @@ namespace Ogre
                 if( shaderParams )
                     psoCache.paramsProfileUpdateCounter = shaderParams->getUpdateCounter();
 
-                mComputeShaderCache.push_back( psoCache );
+                mComputeShaderCache[newCacheEntryIdx] = psoCache;
 
                 //The PSO in the cache doesn't have the properties. Make a hard copy.
                 //We can use this->mSetProperties as it may have been modified during
                 //compilerShader by the template.
-                mComputeShaderCache.back().setProperties = job->mSetProperties;
+                mComputeShaderCache[newCacheEntryIdx].setProperties = job->mSetProperties;
 
-                job->mPsoCacheHash = mComputeShaderCache.size() - 1u;
+                job->mPsoCacheHash = newCacheEntryIdx;
             }
             else
             {
                 //It was already in the cache. Return back the borrowed
                 //properties and set the proper index to the cache.
                 psoCache.setProperties.swap( job->mSetProperties );
-                job->mPsoCacheHash = itor - mComputeShaderCache.begin();
+                job->mPsoCacheHash = static_cast<size_t>( itor - mComputeShaderCache.begin() );
             }
         }
 

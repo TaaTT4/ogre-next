@@ -29,10 +29,15 @@ THE SOFTWARE.
 #define _OgreParallaxCorrectedCubemap_H_
 
 #include "OgreHlmsPbsPrerequisites.h"
+
 #include "Cubemaps/OgreParallaxCorrectedCubemapBase.h"
+
+#include "OgreResource.h"
 #include "OgreFrameListener.h"
+#include "OgreRenderSystem.h"
 #include "OgreGpuProgramParams.h"
 #include "Compositor/OgreCompositorWorkspaceListener.h"
+
 #include "OgreHeaderPrefix.h"
 
 namespace Ogre
@@ -43,7 +48,9 @@ namespace Ogre
     @see HlmsPbsDatablock::setCubemapProbe
     */
     class _OgreHlmsPbsExport ParallaxCorrectedCubemap : public ParallaxCorrectedCubemapBase,
-                                                        public FrameListener
+                                                        public FrameListener,
+                                                        public RenderSystem::Listener,
+                                                        protected ManualResourceLoader
     {
         CubemapProbe    *mCollectedProbes[OGRE_MAX_CUBE_PROBES];
         uint32          mNumCollectedProbes;
@@ -103,11 +110,12 @@ namespace Ogre
         TempRttVec  mTmpRtt;
         TempRttVec  mIblRtt;
 
+        virtual void loadResource(Resource* resource);
         void createProxyGeometry(void);
         void destroyProxyGeometry(void);
         void createCubemapBlendWorkspaceDefinition(void);
         void createCubemapBlendWorkspace(void);
-        void destroyCompositorData(void);
+        void destroyCubemapBlendWorkspace(void);
 
         void calculateBlendFactors(void);
         void setFinalProbeTo( size_t probeIdx );
@@ -131,6 +139,9 @@ namespace Ogre
                                   const CompositorWorkspaceDef *probeWorkspaceDef,
                                   uint8 reservedRqId, uint32 proxyVisibilityMask );
         ~ParallaxCorrectedCubemap();
+
+        void _releaseManualHardwareResources();
+        void _restoreManualHardwareResources();
 
         virtual void destroyAllProbes(void);
 
@@ -221,6 +232,9 @@ namespace Ogre
 
         //FrameListener overloads
         virtual bool frameStarted( const FrameEvent& evt );
+
+        //RenderSystem::Listener overloads
+        virtual void eventOccurred( const String& eventName, const NameValuePairList* parameters );
     };
 
     /** @} */
