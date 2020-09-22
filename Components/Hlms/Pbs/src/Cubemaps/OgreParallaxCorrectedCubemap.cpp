@@ -305,9 +305,12 @@ namespace Ogre
             compositorManager->addListener( this );
 
             HlmsManager *hlmsManager = mRoot->getHlmsManager();
-            OGRE_ASSERT_HIGH( dynamic_cast<HlmsPbs *>( hlmsManager->getHlms( HLMS_PBS ) ) );
-            HlmsPbs *hlmsPbs = static_cast<HlmsPbs *>( hlmsManager->getHlms( HLMS_PBS ) );
-            hlmsPbs->_notifyIblSpecMipmap( mBindTexture->getNumMipmaps() );
+            for( size_t i=Ogre::HLMS_LOW_LEVEL + 1u; i<Ogre::HLMS_MAX; ++i )
+            {
+                HlmsPbs *hlmsPbs = dynamic_cast<HlmsPbs *>( hlmsManager->getHlms( static_cast<HlmsTypes>( i ) ) );
+                if( hlmsPbs )
+                    hlmsPbs->_notifyIblSpecMipmap( mBindTexture->getNumMipmaps() );
+            }
         }
         else
         {
