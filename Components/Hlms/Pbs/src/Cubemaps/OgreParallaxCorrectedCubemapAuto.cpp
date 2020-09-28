@@ -174,6 +174,17 @@ namespace Ogre
 
         TextureGpu *ibl = mIblTarget;
 
+        RenderSystem *renderSystem = mSceneManager->getDestinationRenderSystem();
+        BarrierSolver &solver = renderSystem->getBarrierSolver();
+
+        ResourceTransitionArray &barrier = solver.getNewResourceTransitionsArrayTmp();
+        solver.resolveTransition( barrier, mIblTarget, ResourceLayout::CopySrc, ResourceAccess::Read,
+                                  0u );
+        solver.resolveTransition( barrier, mBindTexture, ResourceLayout::CopyDst, ResourceAccess::Write,
+                                  0u );
+
+        renderSystem->executeResourceTransition( barrier );
+
         if( !mUseDpm2DArray )
             cubemapArrayIdx *= 6u;
 
@@ -185,7 +196,7 @@ namespace Ogre
             TextureBox dstBox = srcBox;
             srcBox.sliceStart = 0;
             dstBox.sliceStart = cubemapArrayIdx;
-            ibl->copyTo( mBindTexture, dstBox, mip, srcBox, mip );
+            ibl->copyTo( mBindTexture, dstBox, mip, srcBox, mip, true, ResourceAccess::Undefined );
         }
     }
     //-----------------------------------------------------------------------------------
@@ -201,7 +212,8 @@ namespace Ogre
 
         if( bEnabled )
         {
-            uint32 textureFlags = TextureFlags::RenderToTexture | TextureFlags::AllowAutomipmaps;
+            uint32 textureFlags = TextureFlags::RenderToTexture | TextureFlags::AllowAutomipmaps |
+                                  TextureFlags::DiscardableContent;
 
             //Create Cubemap
             mRenderTarget =
@@ -273,9 +285,12 @@ namespace Ogre
             compositorManager->addListener( this );
 
             HlmsManager *hlmsManager = mRoot->getHlmsManager();
-            OGRE_ASSERT_HIGH( dynamic_cast<HlmsPbs *>( hlmsManager->getHlms( HLMS_PBS ) ) );
-            HlmsPbs *hlmsPbs = static_cast<HlmsPbs *>( hlmsManager->getHlms( HLMS_PBS ) );
-            hlmsPbs->_notifyIblSpecMipmap( mBindTexture->getNumMipmaps() );
+            for( size_t i=Ogre::HLMS_LOW_LEVEL + 1u; i<Ogre::HLMS_MAX; ++i )
+            {
+                HlmsPbs *hlmsPbs = dynamic_cast<HlmsPbs *>( hlmsManager->getHlms( static_cast<HlmsTypes>( i ) ) );
+                if( hlmsPbs )
+                    hlmsPbs->_notifyIblSpecMipmap( mBindTexture->getNumMipmaps() );
+            }
 
 //            CubemapProbeVec::const_iterator itor = mProbes.begin();
 //            CubemapProbeVec::const_iterator end  = mProbes.end();

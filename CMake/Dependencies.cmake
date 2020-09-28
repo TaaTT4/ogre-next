@@ -40,10 +40,10 @@ elseif(OGRE_BUILD_PLATFORM_ANDROID)
   set(OGRE_DEP_SEARCH_PATH 
     ${OGRE_DEPENDENCIES_DIR}
     ${ENV_OGRE_DEPENDENCIES_DIR}
-    "${OGRE_BINARY_DIR}/AndroidDependencies"
-    "${OGRE_SOURCE_DIR}/AndroidDependencies"
-    "${OGRE_BINARY_DIR}/../AndroidDependencies"
-    "${OGRE_SOURCE_DIR}/../AndroidDependencies"
+    "${OGRE_BINARY_DIR}/DependenciesAndroid"
+    "${OGRE_SOURCE_DIR}/DependenciesAndroid"
+    "${OGRE_BINARY_DIR}/../DependenciesAndroid"
+    "${OGRE_SOURCE_DIR}/../DependenciesAndroid"
   )
 else()
   set(OGRE_DEP_SEARCH_PATH 
@@ -90,6 +90,9 @@ macro_log_feature(FreeImage_FOUND "freeimage" "Support for commonly used graphic
 # Find FreeType
 find_package(Freetype)
 macro_log_feature(FREETYPE_FOUND "freetype" "Portable font engine" "http://www.freetype.org" FALSE "" "")
+
+find_package(Vulkan)
+macro_log_feature(Vulkan_FOUND "vulkan-sdk" "Vulkan SDK" "https://vulkan.lunarg.com/" FALSE "" "")
 
 # Find X11
 if (UNIX AND NOT APPLE AND NOT ANDROID AND NOT EMSCRIPTEN)
