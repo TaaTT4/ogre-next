@@ -63,17 +63,14 @@ namespace Ogre {
 /* Define whether or not Ogre compiled with SSE support.
 */
 #if OGRE_USE_SIMD == 1
-    #if   OGRE_DOUBLE_PRECISION == 0 && OGRE_CPU == OGRE_CPU_X86 && OGRE_COMPILER == OGRE_COMPILER_MSVC && \
-        OGRE_PLATFORM != OGRE_PLATFORM_NACL
-    #   define __OGRE_HAVE_SSE  1
-    #elif OGRE_DOUBLE_PRECISION == 0 && OGRE_CPU == OGRE_CPU_X86 && (OGRE_COMPILER == OGRE_COMPILER_GNUC || OGRE_COMPILER == OGRE_COMPILER_CLANG) && \
-          OGRE_PLATFORM != OGRE_PLATFORM_APPLE_IOS && OGRE_PLATFORM != OGRE_PLATFORM_NACL
+    #if   OGRE_DOUBLE_PRECISION == 0 && OGRE_CPU == OGRE_CPU_X86 && OGRE_PLATFORM != OGRE_PLATFORM_NACL
     #   define __OGRE_HAVE_SSE  1
     #endif
 
     /* Define whether or not Ogre compiled with NEON support.
      */
-    #if OGRE_DOUBLE_PRECISION == 0 && OGRE_CPU == OGRE_CPU_ARM && (OGRE_COMPILER == OGRE_COMPILER_GNUC || OGRE_COMPILER == OGRE_COMPILER_CLANG) && defined(__ARM_NEON__)
+    #if OGRE_DOUBLE_PRECISION == 0 && OGRE_CPU == OGRE_CPU_ARM && \
+        ( defined(__ARM_NEON__) || defined(_WIN32_WINNT_WIN8) && _WIN32_WINNT >= _WIN32_WINNT_WIN8 )
     #   define __OGRE_HAVE_NEON  1
     #endif
 #endif
