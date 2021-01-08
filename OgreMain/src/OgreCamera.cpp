@@ -39,6 +39,7 @@ THE SOFTWARE.
 namespace Ogre {
 
     String Camera::msMovableType = "Camera";
+    Camera::CameraSortMode Camera::msDefaultSortMode = Camera::SortModeDepth;
     //-----------------------------------------------------------------------
     Camera::Camera( IdType id, ObjectMemoryManager *objectMemoryManager, SceneManager* sm )
         : Frustum( id, objectMemoryManager ),
@@ -59,7 +60,8 @@ namespace Ogre {
         mNeedsDepthClamp(false),
         mUseMinPixelSize(false),
         mPixelDisplayRatio(0),
-        mConstantBiasScale(1.0f)
+        mConstantBiasScale(1.0f),
+        mSortMode( msDefaultSortMode )
     {
 
         // Reasonable defaults to camera params
