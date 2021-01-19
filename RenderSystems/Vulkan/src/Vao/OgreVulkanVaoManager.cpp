@@ -928,6 +928,7 @@ namespace Ogre
     //-----------------------------------------------------------------------------------
     void VulkanVaoManager::addDelayedFunc( VulkanDelayedFuncBase *cmd )
     {
+        cmd->frameIdx = mFrameCount;
         mDelayedFuncs[mDynamicBufferCurrentFrame].push_back( cmd );
     }
     //-----------------------------------------------------------------------------------
@@ -1628,19 +1629,19 @@ namespace Ogre
         {
             waitForTailFrameToFinish();
 
-            VulkanDelayedFuncBaseArray::const_iterator itor =
+            VulkanDelayedFuncBaseArray::iterator itor =
                 mDelayedFuncs[mDynamicBufferCurrentFrame].begin();
-            VulkanDelayedFuncBaseArray::const_iterator endt =
-                mDelayedFuncs[mDynamicBufferCurrentFrame].end();
+            VulkanDelayedFuncBaseArray::iterator endt = mDelayedFuncs[mDynamicBufferCurrentFrame].end();
 
-            while( itor != endt )
+            while( itor != endt && ( *itor )->frameIdx != mFrameCount )
             {
                 ( *itor )->execute();
                 delete *itor;
                 ++itor;
             }
 
-            mDelayedFuncs[mDynamicBufferCurrentFrame].clear();
+            mDelayedFuncs[mDynamicBufferCurrentFrame].erase(
+                mDelayedFuncs[mDynamicBufferCurrentFrame].begin(), itor );
         }
 
         if( !mFenceFlushed )
