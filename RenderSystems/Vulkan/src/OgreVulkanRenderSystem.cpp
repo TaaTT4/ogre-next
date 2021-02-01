@@ -346,6 +346,10 @@ namespace Ogre
         mVulkanSupport->setConfigOption( name, value );
     }
     //-------------------------------------------------------------------------
+    const char *VulkanRenderSystem::getPriorityConfigOption( size_t ) const { return "Device"; }
+    //-------------------------------------------------------------------------
+    size_t VulkanRenderSystem::getNumPriorityConfigOptions( void ) const { return 1u; }
+    //-------------------------------------------------------------------------
     String VulkanRenderSystem::validateConfigOptions( void )
     {
         return mVulkanSupport->validateConfigOptions();
@@ -2560,7 +2564,7 @@ namespace Ogre
         if( srcStage == 0 )
             srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         if( dstStage == 0 )
-            dstStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            dstStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
         vkCmdPipelineBarrier(
             mActiveDevice->mGraphicsQueue.mCurrentCmdBuffer, srcStage & mActiveDevice->mSupportedStages,

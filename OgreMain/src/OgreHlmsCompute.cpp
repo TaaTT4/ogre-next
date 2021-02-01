@@ -46,6 +46,7 @@ THE SOFTWARE.
 #include "Vao/OgreTexBufferPacked.h"
 #include "Vao/OgreUavBufferPacked.h"
 
+#include "OgreFileSystem.h"
 #include "OgreLogManager.h"
 
 #include "Hash/MurmurHash3.h"
@@ -264,7 +265,7 @@ namespace Ogre
             debugFilenameOutput = mOutputPath + "./" +
                                     StringConverter::toString( finalHash ) +
                                     job->mSourceFilename + mShaderFileExt;
-            std::ofstream outFile( debugFilenameOutput.c_str(),
+            std::ofstream outFile( Ogre::fileSystemPathFromString(debugFilenameOutput).c_str(),
                                    std::ios::out | std::ios::binary );
             if( mDebugOutputProperties )
                 dumpProperties( outFile );

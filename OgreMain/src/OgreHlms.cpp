@@ -57,6 +57,7 @@ THE SOFTWARE.
 #include "OgreHlmsListener.h"
 #include "OgreBitset.h"
 
+#include "OgreFileSystem.h"
 #include "OgreProfiler.h"
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
@@ -101,6 +102,7 @@ namespace Ogre
     const IdString HlmsBaseProp::Normal             = IdString( "hlms_normal" );
     const IdString HlmsBaseProp::QTangent           = IdString( "hlms_qtangent" );
     const IdString HlmsBaseProp::Tangent            = IdString( "hlms_tangent" );
+    const IdString HlmsBaseProp::Tangent4           = IdString( "hlms_tangent4" );
 
     const IdString HlmsBaseProp::Colour             = IdString( "hlms_colour" );
 
@@ -312,6 +314,9 @@ namespace Ogre
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_APPLE_IOS
         mOutputPath = macCachePath() + '/';
+#endif
+#if OGRE_PLATFORM == OGRE_PLATFORM_WINRT
+        mOutputPath = fileSystemPathToString(Windows::Storage::ApplicationData::Current->TemporaryFolder->Path->Data());
 #endif
     }
     //-----------------------------------------------------------------------------------
@@ -2134,7 +2139,7 @@ namespace Ogre
                     debugFilenameOutput = mOutputPath + "./" +
                                           StringConverter::toString( finalHash ) +
                                           ShaderFiles[i] + mShaderFileExt;
-                    debugDumpFile.open( debugFilenameOutput.c_str(), std::ios::out | std::ios::binary );
+                    debugDumpFile.open( Ogre::fileSystemPathFromString(debugFilenameOutput).c_str(), std::ios::out | std::ios::binary );
 
                     if( mDebugOutputProperties )
                         dumpProperties( debugDumpFile );
@@ -2208,7 +2213,7 @@ namespace Ogre
                     debugFilenameOutput = mOutputPath + "./" +
                                           StringConverter::toString( finalHash ) +
                                           ShaderFiles[i] + mShaderFileExt;
-                    debugDumpFile.open( debugFilenameOutput.c_str(), std::ios::out | std::ios::binary );
+                    debugDumpFile.open( Ogre::fileSystemPathFromString(debugFilenameOutput).c_str(), std::ios::out | std::ios::binary );
 
                     //We need to dump the properties before processing the files, as these
                     //may be overwritten or polluted by the files, thus hiding why we
@@ -2489,6 +2494,10 @@ namespace Ogre
             break;
         case VES_TANGENT:
             setProperty( HlmsBaseProp::Tangent, 1 );
+            if( v1::VertexElement::getTypeCount(type) == 4 )
+            {
+                setProperty(HlmsBaseProp::Tangent4, 1);
+            }
             break;
         case VES_DIFFUSE:
             setProperty( HlmsBaseProp::Colour, 1 );
