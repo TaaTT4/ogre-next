@@ -825,11 +825,11 @@ namespace Ogre {
     void RenderSystem::_resetMetrics()
     {
         const bool oldValue = mMetrics.mIsRecordingMetrics;
-        mMetrics = Metrics();
+        mMetrics = RenderingMetrics();
         mMetrics.mIsRecordingMetrics = oldValue;
     }
     //-----------------------------------------------------------------------
-    void RenderSystem::_addMetrics( const Metrics &newMetrics )
+    void RenderSystem::_addMetrics( const RenderingMetrics &newMetrics )
     {
         if( mMetrics.mIsRecordingMetrics )
         {
@@ -846,7 +846,7 @@ namespace Ogre {
         mMetrics.mIsRecordingMetrics = bEnable;
     }
     //-----------------------------------------------------------------------
-    const RenderSystem::Metrics& RenderSystem::getMetrics() const
+    const RenderingMetrics& RenderSystem::getMetrics() const
     {
         return mMetrics;
     }
@@ -1048,29 +1048,24 @@ namespace Ogre {
     void RenderSystem::_render(const v1::RenderOperation& op)
     {
         // Update stats
-        size_t val;
-
-        if (op.useIndexes)
-            val = op.indexData->indexCount;
-        else
-            val = op.vertexData->vertexCount;
+        size_t primCount = op.useIndexes ? op.indexData->indexCount : op.vertexData->vertexCount;
 
         size_t trueInstanceNum = std::max<size_t>(op.numberOfInstances,1);
-        val *= trueInstanceNum;
+        primCount *= trueInstanceNum;
 
         // account for a pass having multiple iterations
         if (mCurrentPassIterationCount > 1)
-            val *= mCurrentPassIterationCount;
+            primCount *= mCurrentPassIterationCount;
         mCurrentPassIterationNum = 0;
 
         switch(op.operationType)
         {
         case OT_TRIANGLE_LIST:
-            mMetrics.mFaceCount += (val / 3u);
+            mMetrics.mFaceCount += (primCount / 3u);
             break;
         case OT_TRIANGLE_STRIP:
         case OT_TRIANGLE_FAN:
-            mMetrics.mFaceCount += (val - 2u);
+            mMetrics.mFaceCount += (primCount - 2u);
             break;
         case OT_POINT_LIST:
         case OT_LINE_LIST:
@@ -1465,14 +1460,5 @@ namespace Ogre {
     }
     //---------------------------------------------------------------------
     RenderSystem::Listener::~Listener() {}
-    RenderSystem::Metrics::Metrics() :
-        mIsRecordingMetrics( false ),
-        mBatchCount( 0 ),
-        mFaceCount( 0 ),
-        mVertexCount( 0 ),
-        mDrawCount( 0 ),
-        mInstanceCount( 0 )
-    {
-    }
 }
 

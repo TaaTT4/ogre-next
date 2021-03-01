@@ -29,7 +29,7 @@ THE SOFTWARE.
 #define __Common_H__
 // Common stuff
 
-#include "OgrePlatformInformation.h"
+#include "OgrePrerequisites.h"
 
 #include "OgreHeaderPrefix.h"
 #include "Hash/MurmurHash3.h"
@@ -73,6 +73,12 @@ namespace Ogre {
         PrePassCreate,
         /// This pass will be using the results of a previous pre-pass
         PrePassUse
+    };
+
+    enum IndexType
+    {
+        IT_16BIT,
+        IT_32BIT
     };
 
     /** Comparison functions used for the depth/stencil buffer operations and 
@@ -1048,6 +1054,17 @@ namespace Ogre {
         void getFsaaDesc( LwString &outFsaaSetting ) const;
         /// Appends the FSAA description to the string
         void getFsaaDesc( String &outFsaaSetting ) const;
+    };
+
+    struct _OgreExport RenderingMetrics
+    {
+        bool mIsRecordingMetrics;
+        size_t mBatchCount;
+        size_t mFaceCount;
+        size_t mVertexCount;
+        size_t mDrawCount;
+        size_t mInstanceCount;
+        RenderingMetrics();
     };
 
     /// Render window container.

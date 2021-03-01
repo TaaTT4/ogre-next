@@ -106,6 +106,17 @@ namespace Ogre
         };
     }
 
+    namespace ResidencyMask
+    {
+        enum ResidencyMask
+        {
+            OnStorage = 1 << GpuResidency::OnStorage,
+            OnSystemRam = 1 << GpuResidency::OnSystemRam,
+            Resident = 1 << GpuResidency::Resident,
+            All = OnStorage | OnSystemRam | Resident
+        };
+    }
+
     /**
     @class TextureGpuManager
         This class manages all textures (i.e. TextureGpu) since Ogre 2.2
@@ -918,7 +929,7 @@ namespace Ogre
                              size_t &outAvailableStagingTextureBytes );
 
         void dumpStats(void) const;
-        void dumpMemoryUsage( Log* log ) const;
+        void dumpMemoryUsage( Log *log, Ogre::uint32 mask = ResidencyMask::All ) const;
 
         /// Sets a new listener. The old one will be destroyed with OGRE_DELETE
         /// See TextureGpuManagerListener. Pointer cannot be null.
