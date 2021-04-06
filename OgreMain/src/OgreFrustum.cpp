@@ -69,6 +69,7 @@ namespace Ogre {
         mFrustumExtentsManuallySet(false),
         mFrustrumExtentsType(FET_PROJ_PLANE_POS),
         mOrientationMode(OR_DEGREE_0),
+        mVertexData(NULL),
         mReflect(false), 
         mLinkedReflectPlane(0),
         mObliqueDepthProjection(false), 
@@ -631,7 +632,7 @@ namespace Ogre {
                 mVertexData.vertexCount = 32;
                 mVertexData.vertexStart = 0;
                 mVertexData.vertexBufferBinding->setBinding( 0,
-                    v1::HardwareBufferManager::getSingleton().createVertexBuffer(
+                    mVertexData._getHardwareBufferManager()->createVertexBuffer(
                         sizeof(float)*3, 32, v1::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY) );
             }
 

@@ -630,7 +630,7 @@ namespace Ogre
         //Decrement mPendingResidencyChanges and prevent underflow
         mPendingResidencyChanges = std::max( mPendingResidencyChanges, 1u ) - 1u;
 
-        notifyAllListenersTextureChanged( TextureGpuListener::LostResidency );
+        notifyAllListenersTextureChanged( listenerReason );
     }
     //-----------------------------------------------------------------------------------
     void TextureGpu::copyTo( TextureGpu *dst, const TextureBox &dstBox, uint8 dstMipLevel,
@@ -845,7 +845,7 @@ namespace Ogre
     void TextureGpu::_setNextLayout( ResourceLayout::Layout layout )
     {
         OGRE_ASSERT_LOW( ( layout != ResourceLayout::CopySrc && layout != ResourceLayout::CopyDst &&
-                           ResourceLayout::CopyEnd ) &&
+                           layout != ResourceLayout::CopyEnd ) &&
                          "CopySrc/Dst layouts are automanaged. "
                          "Cannot explicitly transition to these layouts" );
     }

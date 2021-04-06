@@ -35,6 +35,13 @@
 
 #include "OgreLwConstString.h"
 
+#if OGRE_COMPILER == OGRE_COMPILER_MSVC && OGRE_COMP_VER < 1600  // no <inttypes.h>
+#    define PRIi64 "lli"
+#    define PRIu64 "llu"
+#else
+#    include <inttypes.h>
+#endif
+
 #ifndef _MSC_VER
     #define OGRE_LWSTRING_SNPRINTF_DEFINED
     #define _snprintf snprintf
@@ -244,7 +251,7 @@ namespace Ogre
                                      "%i", a0 );
             assert( ( written >= 0 ) && ( (size_t)written < mCapacity ) );
             mStrPtr[mCapacity - 1] = '\0';
-            mSize = std::min<size_t>( mSize + std::max( written, 0 ), mCapacity - 1 );
+            mSize = std::min<size_t>( mSize + (size_t)std::max( written, 0 ), mCapacity - 1u );
             return *this;
         }
 
@@ -255,29 +262,27 @@ namespace Ogre
                                      "%u", a0 );
             assert( ( written >= 0 ) && ( (size_t)written < mCapacity ) );
             mStrPtr[mCapacity - 1] = '\0';
-            mSize = std::min<size_t>( mSize + std::max( written, 0 ), mCapacity - 1 );
+            mSize = std::min<size_t>( mSize + (size_t)std::max( written, 0 ), mCapacity - 1u );
             return *this;
         }
 
         LwString& a( int64 a0 )
         {
-            int written = _snprintf( mStrPtr + mSize,
-                                     mCapacity - mSize,
-                                     "%lli", a0 );
+            int written = _snprintf( mStrPtr + mSize, mCapacity - mSize,
+                                     "%" PRIi64, a0 );
             assert( ( written >= 0 ) && ( (size_t)written < mCapacity ) );
             mStrPtr[mCapacity - 1] = '\0';
-            mSize = std::min<size_t>( mSize + std::max( written, 0 ), mCapacity - 1 );
+            mSize = std::min<size_t>( mSize + (size_t)std::max( written, 0 ), mCapacity - 1u );
             return *this;
         }
 
         LwString& a( uint64 a0 )
         {
-            int written = _snprintf( mStrPtr + mSize,
-                                     mCapacity - mSize,
-                                     "%llu", a0 );
+            int written = _snprintf( mStrPtr + mSize, mCapacity - mSize,
+                                     "%" PRIu64, a0 );
             assert( ( written >= 0 ) && ( (size_t)written < mCapacity ) );
             mStrPtr[mCapacity - 1] = '\0';
-            mSize = std::min<size_t>( mSize + std::max( written, 0 ), mCapacity - 1 );
+            mSize = std::min<size_t>( mSize + (size_t)std::max( written, 0 ), mCapacity - 1u );
             return *this;
         }
 
@@ -323,12 +328,12 @@ namespace Ogre
                 if( a0.mPrecision < 0 )
                 {
                     written = _snprintf( mStrPtr + mSize, mCapacity - mSize,
-                                         "%f", a0.mValue );
+                                         "%f", (double)a0.mValue );
                 }
                 else
                 {
                     written = _snprintf( mStrPtr + mSize, mCapacity - mSize,
-                                         "%.*f", a0.mPrecision, a0.mValue );
+                                         "%.*f", a0.mPrecision, (double)a0.mValue );
                 }
             }
             else
@@ -336,18 +341,18 @@ namespace Ogre
                 if( a0.mPrecision < 0 )
                 {
                     written = _snprintf( mStrPtr + mSize, mCapacity - mSize,
-                                         "%*f", a0.mMinWidth, a0.mValue );
+                                         "%*f", a0.mMinWidth, (double)a0.mValue );
                 }
                 else
                 {
                     written = _snprintf( mStrPtr + mSize, mCapacity - mSize,
-                                         "%*.*f", a0.mMinWidth, a0.mPrecision, a0.mValue );
+                                         "%*.*f", a0.mMinWidth, a0.mPrecision, (double)a0.mValue );
                 }
             }
 
             mStrPtr[mCapacity - 1] = '\0';
             assert( ( written >= 0 ) && ( (unsigned)written < mCapacity ) );
-            mSize = std::min<size_t>( mSize + std::max( written, 0 ), mCapacity - 1 );
+            mSize = std::min<size_t>( mSize + (size_t)std::max( written, 0 ), mCapacity - 1u );
             return *this;
         }
 

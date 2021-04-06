@@ -388,7 +388,7 @@ namespace Ogre
         rsc->setCapability(RSC_DEPTH_CLAMP);
 #endif
 
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE_IOS
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE_IOS || ( OGRE_PLATFORM == OGRE_PLATFORM_APPLE && OGRE_CPU == OGRE_CPU_ARM && OGRE_ARCH_TYPE == OGRE_ARCHITECTURE_64 )
         rsc->setCapability( RSC_IS_TILER );
         rsc->setCapability( RSC_TILER_CAN_CLEAR_STENCIL_REGION );
 #endif
@@ -1619,7 +1619,7 @@ namespace Ogre
         for( int i=0; i<mrtCount; ++i )
         {
             HlmsBlendblock const *blendblock = newPso->blendblock;
-            psd.colorAttachments[i].pixelFormat = MetalMappings::get( newPso->pass.colourFormat[i] );
+            psd.colorAttachments[i].pixelFormat = MetalMappings::get( newPso->pass.colourFormat[i], mActiveDevice );
 
             if( psd.colorAttachments[i].pixelFormat == MTLPixelFormatInvalid ||
                 (blendblock->mBlendOperation == SBO_ADD &&
@@ -1652,7 +1652,7 @@ namespace Ogre
         {
             MTLPixelFormat depthFormat = MTLPixelFormatInvalid;
             MTLPixelFormat stencilFormat = MTLPixelFormatInvalid;
-            MetalMappings::getDepthStencilFormat( mActiveDevice, newPso->pass.depthFormat,
+            MetalMappings::getDepthStencilFormat( newPso->pass.depthFormat, mActiveDevice,
                                                   depthFormat, stencilFormat );
             psd.depthAttachmentPixelFormat = depthFormat;
             psd.stencilAttachmentPixelFormat = stencilFormat;

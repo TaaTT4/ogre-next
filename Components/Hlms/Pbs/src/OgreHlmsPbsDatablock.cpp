@@ -90,12 +90,14 @@ namespace Ogre
         mTransparencyValue( 1.0f ),
         mNormalMapWeight( 1.0f ),
         mRefractionStrength( 0.075f ),
+        mClearCoat( 0.0f ),
+        mClearCoatRoughness( 0.0f ),
+        _padding1( 0 ),
         mCubemapProbe( 0 ),
         mBrdf( PbsBrdf::Default )
     {
         memset( mUvSource, 0, sizeof( mUvSource ) );
         memset( mBlendModes, 0, sizeof( mBlendModes ) );
-        memset( _padding1, 0, sizeof( _padding1 ) );
         memset( mUserValue, 0, sizeof( mUserValue ) );
 
         mBgDiffuse[0] = mBgDiffuse[1] = mBgDiffuse[2] = mBgDiffuse[3] = 1.0f;
@@ -228,9 +230,10 @@ namespace Ogre
         detailSamplerRef.mV = TAM_WRAP;
         detailSamplerRef.mW = TAM_WRAP;
 
+        String key;
         for( size_t i=0; i<4; ++i )
         {
-            String key = "detail_map" + StringConverter::toString( i );
+            key.assign( "detail_map" ).push_back( '0' + i );
             if( Hlms::findParamInVec( params, key, paramVal ) )
             {
                 TextureGpu *texture;
@@ -244,7 +247,7 @@ namespace Ogre
                 setTexture( PBSM_DETAIL0 + i, texture, &detailSamplerRef );
             }
 
-            key = "detail_normal_map" + StringConverter::toString( i );
+            key.assign( "detail_normal_map" ).push_back( '0' + i );
             if( Hlms::findParamInVec( params, key, paramVal ) )
             {
                 TextureGpu *texture;
@@ -257,7 +260,7 @@ namespace Ogre
                 setTexture( PBSM_DETAIL0_NM + i, texture, &detailSamplerRef );
             }
 
-            key = "detail_blend_mode" + StringConverter::toString( i );
+            key.assign( "detail_blend_mode" ).push_back( '0' + i );
             if( Hlms::findParamInVec( params, key, paramVal ) )
             {
                 for( size_t j=0; j<NUM_PBSM_BLEND_MODES; ++j )
@@ -272,7 +275,7 @@ namespace Ogre
                 }
             }
 
-            key = "detail_offset_scale" + StringConverter::toString( i );
+            key.assign( "detail_offset_scale" ).push_back( '0' + i );
             if( Hlms::findParamInVec( params, key, paramVal ) )
             {
                 Vector4 offsetScale = StringConverter::parseVector4( paramVal,
@@ -283,14 +286,14 @@ namespace Ogre
                 mDetailsOffsetScale[i][3] = static_cast<float>( offsetScale[3] );
             }
 
-            key = "uv_detail_map" + StringConverter::toString( i );
+            key.assign( "uv_detail_map" ).push_back( '0' + i );
             if( Hlms::findParamInVec( params, key, paramVal ) )
             {
                 setTextureUvSource( static_cast<PbsTextureTypes>( PBSM_DETAIL0 + i ),
                                     StringConverter::parseUnsignedInt( paramVal ) );
             }
 
-            key = "uv_detail_normal_map" + StringConverter::toString( i );
+            key.assign( "uv_detail_normal_map" ).push_back( '0' + i );
             if( Hlms::findParamInVec( params, key, paramVal ) )
             {
                 setTextureUvSource( static_cast<PbsTextureTypes>( PBSM_DETAIL0_NM + i ),
@@ -897,6 +900,35 @@ namespace Ogre
     void HlmsPbsDatablock::setRefractionStrength( float strength )
     {
         mRefractionStrength = strength;
+        scheduleConstBufferUpdate();
+    }
+    //-----------------------------------------------------------------------------------
+    void HlmsPbsDatablock::setClearCoat( float clearCoat )
+    {
+        assert( ( mBrdf & PbsBrdf::BRDF_MASK ) == PbsBrdf::Default );
+
+        bool wasZero = mClearCoat == 0.0f;
+        mClearCoat = clearCoat;
+
+        if( wasZero && clearCoat != 0.0f || !wasZero && clearCoat == 0.0f )
+        {
+            flushRenderables();
+        }
+
+        scheduleConstBufferUpdate();
+    }
+    //-----------------------------------------------------------------------------------
+    void HlmsPbsDatablock::setClearCoatRoughness( float roughness )
+    {
+        mClearCoatRoughness = roughness;
+
+        if( mClearCoatRoughness <= 1e-6f )
+        {
+            LogManager::getSingleton().logMessage( "WARNING: PBS Datablock '" + mName.getFriendlyText() +
+                                                   "' Very low clear coat roughness values can "
+                                                   "cause NaNs in the pixel shader!" );
+        }
+
         scheduleConstBufferUpdate();
     }
     //-----------------------------------------------------------------------------------
