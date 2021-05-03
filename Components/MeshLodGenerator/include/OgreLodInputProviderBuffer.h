@@ -53,7 +53,7 @@ namespace Ogre
 
         LodInputBuffer mBuffer;
 
-        typedef vector<LodData::Vertex*>::type VertexLookupList;
+        typedef vector<LodData::VertexI>::type VertexLookupList;
         // This helps to find the vertex* in LodData for index buffer indices
         VertexLookupList mSharedVertexLookup;
         VertexLookupList mVertexLookup;
@@ -62,43 +62,41 @@ namespace Ogre
         void tuneContainerSize(LodData* data);
         void initialize(LodData* data);
         void addVertexData(LodData* data, LodVertexBuffer& vertexBuffer, bool useSharedVertexLookup);
-        void addIndexData(LodData* data, LodIndexBuffer& indexBuffer, bool useSharedVertexLookup, unsigned short submeshID);
+        void addIndexData(LodData* data, LodIndexBuffer& indexBuffer, bool useSharedVertexLookup, unsigned short submeshID, OperationType op);
         template<typename IndexType>
-        void addIndexDataImpl(LodData* data, IndexType* iPos, const IndexType* iEnd, VertexLookupList& lookup, unsigned short submeshID)
+        void addTriangle(LodData* data, IndexType i0, IndexType i1, IndexType i2, VertexLookupList& lookup, unsigned short submeshID)
         {
-            // Loop through all triangles and connect them to the vertices.
-            for (; iPos < iEnd; iPos += 3)
-            {
                 // It should never reallocate or every pointer will be invalid.
                 OgreAssert(data->mTriangleList.capacity() > data->mTriangleList.size(), "");
                 data->mTriangleList.push_back(LodData::Triangle());
                 LodData::Triangle* tri = &data->mTriangleList.back();
                 tri->isRemoved = false;
                 tri->submeshID = submeshID;
-                for (int i = 0; i < 3; i++)
-                {
-                    // Invalid index: Index is bigger then vertex buffer size.
-                    OgreAssert(iPos[i] < lookup.size(), "");
-                    tri->vertexID[i] = iPos[i];
-                    tri->vertex[i] = lookup[iPos[i]];
-                }
+                // Invalid index: Index is bigger then vertex buffer size.
+                OgreAssert(i0 < lookup.size() && i1 < lookup.size() && i2 < lookup.size(), "");
+                tri->vertexID[0] = i0;
+                tri->vertexID[1] = i1;
+                tri->vertexID[2] = i2;
+                tri->vertexi[0] = lookup[i0];
+                tri->vertexi[1] = lookup[i1];
+                tri->vertexi[2] = lookup[i2];
+
                 if (tri->isMalformed())
                 {
 #if OGRE_DEBUG_MODE
                     stringstream str;
                     str << "In " << data->mMeshName << " malformed triangle found with ID: " << LodData::getVectorIDFromPointer(data->mTriangleList, tri) << ". " <<
                         std::endl;
-                    printTriangle(tri, str);
+                    printTriangle(data, tri, str);
                     str << "It will be excluded from Lod level calculations.";
                     LogManager::getSingleton().stream() << str.str();
 #endif
                     tri->isRemoved = true;
                     data->mIndexBufferInfoList[tri->submeshID].indexCount -= 3;
-                    continue;
+                    return;
                 }
-                tri->computeNormal();
+                tri->computeNormal(data->mVertexList);
                 addTriangleToEdges(data, tri);
-            }
         }
     };
 

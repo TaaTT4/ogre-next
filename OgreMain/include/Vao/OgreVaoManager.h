@@ -33,7 +33,7 @@ THE SOFTWARE.
 
 #include "Vao/OgreVertexBufferPacked.h"
 #include "Vao/OgreIndexBufferPacked.h"
-#include "OgreRenderOperation.h"
+#include "OgrePixelFormatGpu.h"
 
 #include "ogrestd/unordered_set.h"
 
@@ -162,9 +162,9 @@ namespace Ogre
 
         inline void callDestroyBufferImpl( BufferPacked *bufferPacked );
 
-        void switchVboPoolIndex( size_t oldPoolIdx, size_t newPoolIdx );
-        virtual void switchVboPoolIndexImpl( size_t oldPoolIdx, size_t newPoolIdx,
-                                             BufferPacked *buffer ) = 0;
+        void switchVboPoolIndex( unsigned internalVboBufferType, size_t oldPoolIdx, size_t newPoolIdx );
+        virtual void switchVboPoolIndexImpl( unsigned internalVboBufferType, size_t oldPoolIdx,
+                                             size_t newPoolIdx, BufferPacked *buffer ) = 0;
 
     public:
         VaoManager( const NameValuePairList *params );

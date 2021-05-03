@@ -343,8 +343,8 @@ namespace Ogre
         statsVec.swap( outStats );
     }
     //-----------------------------------------------------------------------------------
-    void D3D11VaoManager::switchVboPoolIndexImpl( size_t oldPoolIdx, size_t newPoolIdx,
-                                                  BufferPacked *buffer )
+    void D3D11VaoManager::switchVboPoolIndexImpl( unsigned internalVboBufferType, size_t oldPoolIdx,
+                                                  size_t newPoolIdx, BufferPacked *buffer )
     {
         const BufferPackedTypes bufferPackedType = buffer->getBufferPackedType();
         if( (mSupportsIndirectBuffers || bufferPackedType != BP_TYPE_INDIRECT) &&
@@ -358,8 +358,20 @@ namespace Ogre
                                                         buffer->getBufferInterface() );
             if( bufferInterface->_getInitialData() == 0 )
             {
-                if( bufferInterface->getVboPoolIndex() == oldPoolIdx )
+                InternalBufferType idx0 = 
+                    ( bufferPackedType == BP_TYPE_VERTEX ) ? VERTEX_BUFFER :
+                    ( bufferPackedType == BP_TYPE_INDEX ) ? INDEX_BUFFER :
+                    SHADER_BUFFER;
+
+                BufferType idx1 = buffer->getBufferType();
+                if( idx1 >= BT_DYNAMIC_DEFAULT )
+                    idx1 = BT_DYNAMIC_DEFAULT;
+
+                if( unsigned( MAKELONG( idx0, idx1 ) ) == internalVboBufferType &&
+                    bufferInterface->getVboPoolIndex() == oldPoolIdx )
+                {
                     bufferInterface->_setVboPoolIndex( newPoolIdx );
+                }
             }
         }
     }
@@ -385,8 +397,9 @@ namespace Ogre
 
                         //There's (unrelated) live buffers whose vboIdx will now point out of bounds.
                         //We need to update them so they don't crash deallocateVbo later.
-                        switchVboPoolIndex( (size_t)(mVbos[idx0][idx1].size() - 1u),
-                                            (size_t)(itor - mVbos[idx0][idx1].begin()) );
+                        switchVboPoolIndex( unsigned( MAKELONG( idx0, idx1 ) ),
+                                            ( size_t )( mVbos[idx0][idx1].size() - 1u ),
+                                            ( size_t )( itor - mVbos[idx0][idx1].begin() ) );
 
                         itor = efficientVectorRemove( mVbos[idx0][idx1], itor );
                         end  = mVbos[idx0][idx1].end();

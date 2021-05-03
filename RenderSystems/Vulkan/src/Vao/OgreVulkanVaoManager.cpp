@@ -262,23 +262,33 @@ namespace Ogre
         outFreeBytes = 0;
     }
     //-----------------------------------------------------------------------------------
-    void VulkanVaoManager::switchVboPoolIndexImpl( size_t oldPoolIdx, size_t newPoolIdx,
-                                                   BufferPacked *buffer )
+    void VulkanVaoManager::switchVboPoolIndexImpl( unsigned internalVboBufferType, size_t oldPoolIdx,
+                                                   size_t newPoolIdx, BufferPacked *buffer )
     {
         if( mSupportsIndirectBuffers || buffer->getBufferPackedType() != BP_TYPE_INDIRECT )
         {
             VulkanBufferInterface *bufferInterface =
                 static_cast<VulkanBufferInterface *>( buffer->getBufferInterface() );
-            if( bufferInterface->getVboPoolIndex() == oldPoolIdx )
-                bufferInterface->_setVboPoolIndex( newPoolIdx );
+
+            // All BufferPacked are created with readCapable = false
+            // That is an attribute used for staging buffers
+            const VboFlag vboFlag = bufferTypeToVboFlag( buffer->getBufferType(), false );
+            if( vboFlag == internalVboBufferType )
+            {
+                if( bufferInterface->getVboPoolIndex() == oldPoolIdx )
+                    bufferInterface->_setVboPoolIndex( newPoolIdx );
+            }
         }
     }
     //-----------------------------------------------------------------------------------
     void VulkanVaoManager::cleanupEmptyPools( void )
     {
+        // And StagingBuffers, StagingTextures, TextureGpu, and anything that
+        // calls either allocateVbo or allocateRawBuffer (e.g. AsyncTextureTicket,
+        // VulkanDiscardBufferManager, etc)
         TODO_whenImplemented_include_stagingBuffers;
 
-        for( int vboIdx = 0; vboIdx < MAX_VBO_FLAG; ++vboIdx )
+        for( unsigned vboIdx = 0; vboIdx < MAX_VBO_FLAG; ++vboIdx )
         {
             VboVec::iterator itor = mVbos[vboIdx].begin();
             VboVec::iterator endt = mVbos[vboIdx].end();
@@ -317,7 +327,7 @@ namespace Ogre
 
                     // There's (unrelated) live buffers whose vboIdx will now point out of bounds.
                     // We need to update them so they don't crash deallocateVbo later.
-                    switchVboPoolIndex( ( size_t )( mVbos[vboIdx].size() - 1u ),
+                    switchVboPoolIndex( vboIdx, ( size_t )( mVbos[vboIdx].size() - 1u ),
                                         ( size_t )( itor - mVbos[vboIdx].begin() ) );
 
                     itor = efficientVectorRemove( mVbos[vboIdx], itor );
