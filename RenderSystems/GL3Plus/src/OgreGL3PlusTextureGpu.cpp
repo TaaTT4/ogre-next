@@ -241,6 +241,11 @@ namespace Ogre
         assert( mResidencyStatus == GpuResidency::Resident );
         assert( mFinalTextureName || mPixelFormat == PFG_NULL );
 
+        OGRE_ASSERT_LOW( mDataPreparationsPending > 0u &&
+                         "Calling notifyDataIsReady too often! Remove this call"
+                         "See https://github.com/OGRECave/ogre-next/issues/101" );
+        --mDataPreparationsPending;
+
         mDisplayTextureName = mFinalTextureName;
 
         notifyAllListenersTextureChanged( TextureGpuListener::ReadyForRendering );
@@ -248,7 +253,7 @@ namespace Ogre
     //-----------------------------------------------------------------------------------
     bool GL3PlusTextureGpu::_isDataReadyImpl(void) const
     {
-        return mDisplayTextureName == mFinalTextureName;
+        return mDisplayTextureName == mFinalTextureName && mDataPreparationsPending == 0u;
     }
     //-----------------------------------------------------------------------------------
     void GL3PlusTextureGpu::_setToDisplayDummyTexture(void)
@@ -617,9 +622,11 @@ namespace Ogre
     void GL3PlusTextureGpu::copyTo( TextureGpu *dst, const TextureBox &dstBox, uint8 dstMipLevel,
                                     const TextureBox &srcBox, uint8 srcMipLevel,
                                     bool keepResolvedTexSynced,
-                                    ResourceAccess::ResourceAccess issueBarriers )
+                                    CopyEncTransitionMode::CopyEncTransitionMode srcTransitionMode,
+                                    CopyEncTransitionMode::CopyEncTransitionMode dstTransitionMode )
     {
-        TextureGpu::copyTo( dst, dstBox, dstMipLevel, srcBox, srcMipLevel, issueBarriers );
+        TextureGpu::copyTo( dst, dstBox, dstMipLevel, srcBox, srcMipLevel, srcTransitionMode,
+                            dstTransitionMode );
 
         assert( dynamic_cast<GL3PlusTextureGpu*>( dst ) );
 
@@ -693,7 +700,8 @@ namespace Ogre
         }
     }
     //-----------------------------------------------------------------------------------
-    void GL3PlusTextureGpu::_autogenerateMipmaps( bool bUseBarrierSolver )
+    void GL3PlusTextureGpu::_autogenerateMipmaps( CopyEncTransitionMode::CopyEncTransitionMode
+                                                  /*transitionMode*/ )
     {
         if( !mFinalTextureName )
             return;

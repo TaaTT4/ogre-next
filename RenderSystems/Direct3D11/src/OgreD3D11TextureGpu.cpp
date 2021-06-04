@@ -364,6 +364,11 @@ namespace Ogre
         assert( mResidencyStatus == GpuResidency::Resident );
         assert( mFinalTextureName || mPixelFormat == PFG_NULL );
 
+        OGRE_ASSERT_LOW( mDataPreparationsPending > 0u &&
+                         "Calling notifyDataIsReady too often! Remove this call"
+                         "See https://github.com/OGRECave/ogre-next/issues/101" );
+        --mDataPreparationsPending;
+
         mDefaultDisplaySrv.Reset();
 
         mDisplayTextureName = mFinalTextureName.Get();
@@ -379,7 +384,7 @@ namespace Ogre
     //-----------------------------------------------------------------------------------
     bool D3D11TextureGpu::_isDataReadyImpl(void) const
     {
-        return mDisplayTextureName == mFinalTextureName.Get();
+        return mDisplayTextureName == mFinalTextureName.Get() && mDataPreparationsPending == 0u;
     }
     //-----------------------------------------------------------------------------------
     void D3D11TextureGpu::_setToDisplayDummyTexture(void)
@@ -440,9 +445,11 @@ namespace Ogre
     void D3D11TextureGpu::copyTo( TextureGpu *dst, const TextureBox &dstBox, uint8 dstMipLevel,
                                   const TextureBox &srcBox, uint8 srcMipLevel,
                                   bool keepResolvedTexSynced,
-                                  ResourceAccess::ResourceAccess issueBarriers )
+                                  CopyEncTransitionMode::CopyEncTransitionMode srcTransitionMode,
+                                  CopyEncTransitionMode::CopyEncTransitionMode dstTransitionMode )
     {
-        TextureGpu::copyTo( dst, dstBox, dstMipLevel, srcBox, srcMipLevel, issueBarriers );
+        TextureGpu::copyTo( dst, dstBox, dstMipLevel, srcBox, srcMipLevel, srcTransitionMode,
+                            dstTransitionMode );
 
         assert( dynamic_cast<D3D11TextureGpu*>( dst ) );
         D3D11TextureGpu *dstD3d = static_cast<D3D11TextureGpu*>( dst );
@@ -517,7 +524,8 @@ namespace Ogre
         }
     }
     //-----------------------------------------------------------------------------------
-    void D3D11TextureGpu::_autogenerateMipmaps( bool bUseBarrierSolver )
+    void D3D11TextureGpu::_autogenerateMipmaps( CopyEncTransitionMode::CopyEncTransitionMode
+                                                /*transitionMode*/ )
     {
         if( !mFinalTextureName || !isDataReady() )
             return;

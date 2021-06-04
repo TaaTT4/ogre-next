@@ -30,12 +30,14 @@ THE SOFTWARE.
 #define _OgreTextureGpuManager_H_
 
 #include "OgrePrerequisites.h"
+
+#include "OgreBitset.h"
+#include "OgreImage2.h"
 #include "OgreTextureGpu.h"
 #include "OgreTextureGpuListener.h"
-#include "OgreImage2.h"
 #include "Threading/OgreLightweightMutex.h"
-#include "Threading/OgreWaitableEvent.h"
 #include "Threading/OgreThreads.h"
+#include "Threading/OgreWaitableEvent.h"
 
 #include "ogrestd/list.h"
 #include "ogrestd/map.h"
@@ -382,16 +384,15 @@ namespace Ogre
         struct QueuedImage
         {
             Image2      image;
-            uint64      mipLevelBitSet[4];
+            bitset64    mipLevelBitSet;
             TextureGpu  *dstTexture;
-            uint8       numSlices;
             bool        autoDeleteImage;
             /// See LoadRequest::sliceOrDepth
             uint32      dstSliceOrDepth;
             FilterBaseArray filters;
 
-            QueuedImage( Image2 &srcImage, uint8 numMips, uint8 _numSlices, TextureGpu *_dstTexture,
-                         uint32 _dstSliceOrDepth, FilterBaseArray &inOutFilters );
+			QueuedImage( Image2 &srcImage, TextureGpu *_dstTexture, uint32 _dstSliceOrDepth,
+						 FilterBaseArray &inOutFilters );
             void destroy(void);
             bool empty(void) const;
             bool isMipSliceQueued( uint8 mipLevel, uint8 slice ) const;
@@ -468,13 +469,15 @@ namespace Ogre
             GpuResidency::GpuResidency  targetResidency;
             Image2                      *image;
             bool                        autoDeleteImage;
+            bool                        reuploadOnly;
 
-            void init( GpuResidency::GpuResidency _targetResidency,
-                       Image2 *_image, bool _autoDeleteImage )
+            void init( GpuResidency::GpuResidency _targetResidency, Image2 *_image,
+                       bool _autoDeleteImage, bool _reuploadOnly )
             {
                 targetResidency = _targetResidency;
-                image           = _image;
+                image = _image;
                 autoDeleteImage = _autoDeleteImage;
+                reuploadOnly = _reuploadOnly;
             }
         };
 
@@ -741,7 +744,7 @@ namespace Ogre
 
         /// It is not enough to call waitForStreamingCompletion to render
         /// single frame with all textures loaded, as new loading requests
-        /// could be added during frame rendering. In this case waiting 
+        /// could be added during frame rendering. In this case waiting
         /// and rendering could be repeated to avoid the problem.
         bool hasNewLoadRequests() const { return mAddedNewLoadRequestsSinceWaitingForStreamingCompletion; }
 
@@ -1158,8 +1161,8 @@ namespace Ogre
         VaoManager* getVaoManager(void) const;
 
     protected:
-        void scheduleLoadRequest( TextureGpu *texture, Image2 *image,
-                                  bool autoDeleteImage, bool toSysRam );
+        void scheduleLoadRequest( TextureGpu *texture, Image2 *image, bool autoDeleteImage,
+                                  bool toSysRam, bool reuploadOnly );
 
         /// Transitions a texture from OnSystemRam to Resident; and asks the worker thread
         /// to transfer the data in the background.
@@ -1168,14 +1171,18 @@ namespace Ogre
         /// disk and loading listeners.
         void scheduleLoadFromRam( TextureGpu *texture );
 
-        void scheduleLoadRequest( TextureGpu *texture,
-                                  const String &name, const String &resourceGroup,
+        void scheduleLoadRequest( TextureGpu *texture, const String &name, const String &resourceGroup,
                                   uint32 filters, Image2 *image, bool autoDeleteImage, bool toSysRam,
-                                  bool skipMetadataCache=false,
-                                  uint32 sliceOrDepth=std::numeric_limits<uint32>::max() );
+                                  bool reuploadOnly, bool skipMetadataCache = false,
+                                  uint32 sliceOrDepth = std::numeric_limits<uint32>::max() );
+
     public:
+        void _scheduleUpdate( TextureGpu *texture, uint32 filters, Image2 *image, bool autoDeleteImage,
+                              bool skipMetadataCache = false,
+                              uint32 sliceOrDepth = std::numeric_limits<uint32>::max() );
+
         void _scheduleTransitionTo( TextureGpu *texture, GpuResidency::GpuResidency targetResidency,
-                                    Image2 *image, bool autoDeleteImage );
+                                    Image2 *image, bool autoDeleteImage, bool reuploadOnly );
         void _queueDownloadToRam( TextureGpu *texture, bool resyncOnly );
         /// When true we will ignore all tasks in mScheduledTasks and execute transitions immediately
         /// Caller is responsible for ensuring this is safe to do.

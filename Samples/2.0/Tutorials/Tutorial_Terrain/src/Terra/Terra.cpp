@@ -132,8 +132,6 @@ namespace Ogre
         stagingTexture->upload( texBox, m_heightMapTex, 0, 0, 0 );
         textureManager->removeStagingTexture( stagingTexture );
         stagingTexture = 0;
-
-        m_heightMapTex->notifyDataIsReady();
     }
     //-----------------------------------------------------------------------------------
     void Terra::createHeightmap( Image2 &image, const String &imageName,
@@ -227,7 +225,6 @@ namespace Ogre
             m_normalMapTex->setPixelFormat( PFG_RGBA8_UNORM );
         }
         m_normalMapTex->scheduleTransitionTo( GpuResidency::Resident );
-        m_normalMapTex->notifyDataIsReady();
 
         Ogre::TextureGpu *tmpRtt = TerraSharedResources::getTempTexture(
             "TMP NormalMapTex_", getId(), m_sharedResources, TerraSharedResources::TmpNormalMap,
@@ -268,15 +265,11 @@ namespace Ogre
         m_compositorManager->removeWorkspace( workspace );
         mManager->destroyCamera( dummyCamera );
 
-        mManager->getDestinationRenderSystem()->flushTextureCopyOperations();
-
         for( uint8 i = 0u; i < m_normalMapTex->getNumMipmaps(); ++i )
         {
             tmpRtt->copyTo( m_normalMapTex, m_normalMapTex->getEmptyBox( i ), i,
                             tmpRtt->getEmptyBox( i ), i );
         }
-
-        //mManager->getDestinationRenderSystem()->flushPendingAutoResourceLayouts();
 
         TerraSharedResources::destroyTempTexture( m_sharedResources, tmpRtt );
     }

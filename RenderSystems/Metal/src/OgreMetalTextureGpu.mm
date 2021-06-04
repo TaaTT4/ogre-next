@@ -183,6 +183,11 @@ namespace Ogre
         assert( mResidencyStatus == GpuResidency::Resident );
         assert( mFinalTextureName || mPixelFormat == PFG_NULL );
 
+        OGRE_ASSERT_LOW( mDataPreparationsPending > 0u &&
+                         "Calling notifyDataIsReady too often! Remove this call"
+                         "See https://github.com/OGRECave/ogre-next/issues/101" );
+        --mDataPreparationsPending;
+
         mDisplayTextureName = mFinalTextureName;
 
         notifyAllListenersTextureChanged( TextureGpuListener::ReadyForRendering );
@@ -190,7 +195,7 @@ namespace Ogre
     //-----------------------------------------------------------------------------------
     bool MetalTextureGpu::_isDataReadyImpl(void) const
     {
-        return mDisplayTextureName == mFinalTextureName;
+        return mDisplayTextureName == mFinalTextureName && mDataPreparationsPending == 0u;
     }
     //-----------------------------------------------------------------------------------
     void MetalTextureGpu::_setToDisplayDummyTexture(void)
@@ -239,12 +244,14 @@ namespace Ogre
             _setToDisplayDummyTexture();
     }
     //-----------------------------------------------------------------------------------
-    void MetalTextureGpu::copyTo( TextureGpu *dst, const TextureBox &dstBox, uint8 dstMipLevel,
-                                  const TextureBox &srcBox, uint8 srcMipLevel,
-                                  bool keepResolvedTexSynced,
-                                  ResourceAccess::ResourceAccess issueBarriers )
+    void MetalTextureGpu::copyTo(
+        TextureGpu *dst, const TextureBox &dstBox, uint8 dstMipLevel, const TextureBox &srcBox,
+        uint8 srcMipLevel, bool keepResolvedTexSynced,
+        CopyEncTransitionMode::CopyEncTransitionMode srcTransitionMode,
+        CopyEncTransitionMode::CopyEncTransitionMode dstTransitionMode )
     {
-        TextureGpu::copyTo( dst, dstBox, dstMipLevel, srcBox, srcMipLevel, issueBarriers );
+        TextureGpu::copyTo( dst, dstBox, dstMipLevel, srcBox, srcMipLevel, srcTransitionMode,
+                            dstTransitionMode );
 
         assert( dynamic_cast<MetalTextureGpu*>( dst ) );
 
@@ -312,7 +319,8 @@ namespace Ogre
         }
     }
     //-----------------------------------------------------------------------------------
-    void MetalTextureGpu::_autogenerateMipmaps( bool bUseBarrierSolver )
+    void MetalTextureGpu::_autogenerateMipmaps( CopyEncTransitionMode::CopyEncTransitionMode
+                                                /*transitionMode*/ )
     {
         MetalTextureGpuManager *textureManagerMetal =
                 static_cast<MetalTextureGpuManager*>( mTextureManager );

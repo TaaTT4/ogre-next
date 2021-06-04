@@ -1072,6 +1072,9 @@ namespace Ogre {
 
         const LightListInfo& getGlobalLightList(void) const { return mGlobalLightList; }
 
+        /// Allocates required memory in mGlobalLightList
+        void reserveSlotsInGlobalLightList(size_t addSlotsToCapacity = 0);
+
         /** Retrieve a set of clipping planes for a given light. 
         */
         virtual const PlaneList& getLightClippingPlanes(const Light* l);
@@ -2050,7 +2053,8 @@ namespace Ogre {
             @see
                 BillboardSet
         */
-        virtual v1::BillboardSet* createBillboardSet(unsigned int poolSize = 20);
+        virtual v1::BillboardSet* createBillboardSet(unsigned int poolSize = 20,
+                                                     SceneMemoryMgrTypes sceneType = SCENE_DYNAMIC);
 
         /** Removes & destroys an BillboardSet from the SceneManager.
             @warning
